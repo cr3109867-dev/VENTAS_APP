@@ -1,0 +1,40 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+    <h1>Inventario de productos</h1>
+
+    <a href="{{ url_for('registrar_producto') }}" class="btn">➕ Registrar nuevo producto</a>
+
+    <table>
+        <tr>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Cantidad</th>
+            <th>Proveedor</th>
+            <th>Acciones</th>
+        </tr>
+        {% for producto in productos %}
+        <tr>
+            <td>{{ producto.nombre }}</td>
+            <td>{{ producto.categoria }}</td>
+            <td>${{ producto.precio }}</td>
+            <td>
+                {% if producto.cantidad
+                < 5 %} <span class="bajo-stock">{{ producto.cantidad }} ⚠️ Bajo stock</span>
+                    {% else %} {{ producto.cantidad }} {% endif %}
+            </td>
+            <td>{{ producto.proveedor }}</td>
+            <td>
+                <!-- Botón Editar -->
+                <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn">✏️ Editar</a>
+
+                <!-- Botón Eliminar -->
+                <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;">
+                    <button type="submit" class="cancelar">🗑️ Eliminar</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

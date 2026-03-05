@@ -1,0 +1,129 @@
+/* Estilos generales */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f6f9;
+    color: #333;
+}
+
+
+/* Barra de navegación */
+
+nav {
+    background: #2c3e50;
+    padding: 10px;
+    text-align: center;
+}
+
+nav a {
+    color: #ecf0f1;
+    margin: 0 15px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav a:hover {
+    color: #1abc9c;
+}
+
+
+/* Contenedor principal */
+
+.container {
+    width: 90%;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Tablas */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+table th,
+table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+table th {
+    background: #34495e;
+    color: #fff;
+}
+
+table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+
+/* Botones */
+
+button,
+.btn {
+    background: #1abc9c;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover,
+.btn:hover {
+    background: #16a085;
+}
+
+
+/* Botón eliminar */
+
+.cancelar {
+    background: #e74c3c;
+}
+
+.cancelar:hover {
+    background: #c0392b;
+}
+
+
+/* Formularios */
+
+form {
+    margin: 15px 0;
+}
+
+input,
+select {
+    padding: 8px;
+    margin: 5px 0;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+
+/* Alerta de stock bajo */
+
+.bajo-stock {
+    color: red;
+    font-weight: bold;
+}
+
+
+/* Encabezados */
+
+h1,
+h2 {
+    color: #2c3e50;
+    text-align: center;
+}

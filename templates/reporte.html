@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Reporte de Ganancias</h1>
+
+    <!-- Ganancias totales -->
+    <h2>💰 Ganancias totales: ${{ ganancias }}</h2>
+
+    <!-- Gráfica de ganancias por producto -->
+    <h2>📊 Ganancias por producto</h2>
+    <canvas id="gananciasChart"></canvas>
+
+    <!-- Gráfica de productos más vendidos -->
+    <h2>🥇 Productos más vendidos</h2>
+    <canvas id="productosChart"></canvas>
+</div>
+
+<!-- Script de Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Datos enviados desde app.py (con |safe para evitar errores de sintaxis)
+    const productos = {{ productos_top | tojson | safe }};
+    const precios = {{ precios_productos | tojson | safe }};
+
+    // Extraer nombres y cantidades
+    const nombres = productos.map(p => p[0]);
+    const cantidades = productos.map(p => p[1]);
+
+    // Calcular ganancias por producto
+    const gananciasPorProducto = cantidades.map((c, i) => c * precios[i]);
+
+    // Gráfica de productos más vendidos (pastel)
+    new Chart(document.getElementById('productosChart'), {
+        type: 'pie',
+        data: {
+            labels: nombres,
+            datasets: [{
+                label: 'Cantidad vendida',
+                data: cantidades,
+                backgroundColor: ['#1abc9c','#3498db','#9b59b6','#f39c12','#e74c3c']
+            }]
+        }
+    });
+
+    // Gráfica de ganancias por producto (barras)
+    new Chart(document.getElementById('gananciasChart'), {
+        type: 'bar',
+        data: {
+            labels: nombres,
+            datasets: [{
+                label: 'Ganancias ($)',
+                data: gananciasPorProducto,
+                backgroundColor: '#16a085'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

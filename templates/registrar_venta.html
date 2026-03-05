@@ -1,0 +1,19 @@
+{% extends "base.html" %} {% block title %}Registrar venta{% endblock %} {% block content %}
+<h2>Registrar nueva venta</h2>
+<form method="POST">
+    <label>Producto:</label>
+    <select name="producto_id" required>
+        {% for producto in productos %}
+        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Cantidad:</label>
+    <input type="number" name="cantidad" required>
+
+    <label>Cliente:</label>
+    <input type="text" name="cliente" required>
+
+    <button type="submit"><i class="fas fa-check-circle"></i> Guardar venta</button>
+</form>
+{% endblock %}
