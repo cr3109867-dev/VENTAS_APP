@@ -1,31 +1,57 @@
 # init_db.py
 import sqlite3
 
-# Conectar (si no existe, se crea automáticamente en la misma carpeta)
-conn = sqlite3.connect("database.db")
-c = conn.cursor()
+# Conexión a la base de datos principal
+conn = sqlite3.connect("ventas_app.db")
+cursor = conn.cursor()
 
-# Crear tabla de productos
-c.execute('''CREATE TABLE IF NOT EXISTS productos (
+# Tabla de usuarios (para login)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT,
+    correo TEXT UNIQUE NOT NULL,
+    contraseña TEXT NOT NULL,
+    nombre TEXT
+)
+""")
+
+# Tabla de inventario (productos simples)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS inventario (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    producto TEXT NOT NULL,
+    precio REAL NOT NULL,
+    stock INTEGER NOT NULL
+)
+""")
+
+# Tabla de productos (más detallada, con proveedor y categoría)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS productos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
     categoria TEXT,
-    precio REAL,
-    cantidad INTEGER,
+    precio REAL NOT NULL,
+    cantidad INTEGER NOT NULL,
     proveedor TEXT
-)''')
+)
+""")
 
-# Crear tabla de ventas
-c.execute('''CREATE TABLE IF NOT EXISTS ventas (
+# Tabla de ventas (relaciona usuarios y productos)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS ventas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER,
     producto_id INTEGER,
-    fecha TEXT,
     cantidad INTEGER,
+    fecha TEXT,
     cliente TEXT,
+    FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
     FOREIGN KEY(producto_id) REFERENCES productos(id)
-)''')
+)
+""")
 
-# Insertar productos ficticios
+# Insertar productos ficticios (solo si la tabla está vacía)
 productos = [
     ("Arroz 1kg", "Granos", 5000, 50, "Distribuidora La 14"),
     ("Aceite 500ml", "Abarrotes", 8000, 30, "Alimentos S.A."),
@@ -37,13 +63,15 @@ productos = [
     ("Huevos docena", "Proteína", 7000, 35, "Granja Santa Fé")
 ]
 
-c.executemany(
-    "INSERT INTO productos (nombre, categoria, precio, cantidad, proveedor) VALUES (?, ?, ?, ?, ?)",
-    productos
-)
+cursor.executemany("""
+INSERT INTO productos (nombre, categoria, precio, cantidad, proveedor)
+VALUES (?, ?, ?, ?, ?)
+""", productos)
 
 # Guardar cambios y cerrar conexión
 conn.commit()
 conn.close()
 
-print("✅ Base de datos creada con éxito y productos insertados.")
+print("✅ Base de datos 'ventas_app.db' creada con éxito y productos insertados.")
+
+

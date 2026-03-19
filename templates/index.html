@@ -1,4 +1,19 @@
 {% extends "base.html" %} {% block title %}Inicio{% endblock %} {% block content %}
 <h2>Bienvenido al sistema de ventas</h2>
 <p>Selecciona una opción del menú para comenzar:</p>
-{% endblock %}
+
+{% if session.get("usuario_nombre") %}
+<p>Hola, {{ session["usuario_nombre"] }} 👋</p>
+<ul>
+    <li><a href="{{ url_for('inventario') }}">Inventario</a></li>
+    <li><a href="{{ url_for('ventas') }}">Ventas</a></li>
+    <li><a href="{{ url_for('reporte') }}">Reporte</a></li>
+    <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+</ul>
+{% else %}
+<p>No has iniciado sesión.</p>
+<ul>
+    <li><a href="{{ url_for('login') }}">Iniciar sesión</a></li>
+    <li><a href="{{ url_for('register') }}">Registrarse</a></li>
+</ul>
+{% endif %} {% endblock %}

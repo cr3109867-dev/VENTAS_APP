@@ -1,40 +1,36 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block title %}Ventas{% endblock %} {% block content %}
 <div class="container">
-    <h1>Inventario de productos</h1>
+    <h1>Listado de Ventas</h1>
 
-    <a href="{{ url_for('registrar_producto') }}" class="btn">➕ Registrar nuevo producto</a>
+    <a href="{{ url_for('registrar_venta') }}" class="btn">➕ Registrar nueva venta</a>
 
     <table>
-        <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Precio</th>
-            <th>Cantidad</th>
-            <th>Proveedor</th>
-            <th>Acciones</th>
-        </tr>
-        {% for producto in productos %}
-        <tr>
-            <td>{{ producto.nombre }}</td>
-            <td>{{ producto.categoria }}</td>
-            <td>${{ producto.precio }}</td>
-            <td>
-                {% if producto.cantidad
-                < 5 %} <span class="bajo-stock">{{ producto.cantidad }} ⚠️ Bajo stock</span>
-                    {% else %} {{ producto.cantidad }} {% endif %}
-            </td>
-            <td>{{ producto.proveedor }}</td>
-            <td>
-                <!-- Botón Editar -->
-                <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn">✏️ Editar</a>
-
-                <!-- Botón Eliminar -->
-                <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;">
-                    <button type="submit" class="cancelar">🗑️ Eliminar</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio unitario</th>
+                <th>Total</th>
+                <th>Vendedor</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in ventas %}
+            <tr>
+                <td>{{ v.id }}</td>
+                <td>{{ v.fecha }}</td>
+                <td>{{ v.cliente }}</td>
+                <td>{{ v.nombre }}</td>
+                <td>{{ v.cantidad }}</td>
+                <td>${{ v.precio }}</td>
+                <td>${{ v.cantidad * v.precio }}</td>
+                <td>{{ v.vendedor if v.vendedor else "N/A" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 {% endblock %}

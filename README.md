@@ -1,76 +1,152 @@
-# Ventas App
+# 🛒 Ventas App
 
-*Ventas App* es un sistema web desarrollado con *Flask* y *SQLite* para la gestión de inventario y ventas en pequeños negocios.  
-Su objetivo es ofrecer una solución sencilla, accesible y profesional para tiendas, ferreterías, farmacias y otros comercios que necesitan controlar productos, registrar ventas y generar reportes de ganancias.
+**Ventas App** es un sistema web desarrollado con **Flask** y **SQLite** para la gestión de inventario, ventas y usuarios.
+Incluye autenticación (registro y login) y envío de notificaciones por correo electrónico usando Gmail.
 
 ---
 
 ## 🚀 Características principales
-- 📦 *Inventario*: registrar productos con nombre, categoría, precio, cantidad y proveedor.
-- ✏️ *Edición y eliminación*: actualizar datos de productos o eliminarlos cuando ya no estén disponibles.
-- 💰 *Ventas*: registrar ventas con cliente, cantidad y fecha automáticamente.
-- 📊 *Reportes*: calcular ganancias totales y mostrar historial de ventas.
-- 🎨 *Interfaz responsive*: diseño moderno que se adapta a PC, tablet y celular.
-- 🔒 *Base de datos local*: almacenamiento seguro con SQLite.
-- 🗑️ *Gestión completa CRUD*: crear, leer, actualizar y eliminar productos.
+
+* 👤 **Autenticación de usuarios**
+
+  * Registro de usuarios
+  * Inicio y cierre de sesión
+  * Notificación por correo al registrarse
+  * Notificación por correo al iniciar sesión
+
+* 📦 **Inventario**
+
+  * Registro de productos
+  * Edición y eliminación de productos
+
+* 💰 **Ventas**
+
+  * Registro de ventas con cliente, cantidad y fecha
+  * Actualización automática del inventario
+
+* 📊 **Reportes**
+
+  * Cálculo de ganancias
+  * Productos más vendidos
+
+* 📧 **Sistema de correos**
+
+  * Envío de correos con SMTP (Gmail)
+  * Plantillas HTML personalizadas
+
+* 🎨 **Interfaz**
+
+  * Diseño responsive adaptable a distintos dispositivos
+
+* 🗄️ **Base de datos**
+
+  * SQLite para almacenamiento local
 
 ---
 
 ## 📂 Estructura del proyecto
 
+```id="estructura1"
 VENTAS_APP/
-│── app.py                # Aplicación Flask principal
-│── init_db.py            # Script para inicializar la base de datos
-│── database.db           # Base de datos SQLite
-│── requirements.txt      # Dependencias del proyecto
-│── README.md             # Documentación
-│── LICENSE               # Licencia (ej. MIT)
 │
-├── static/               # Archivos estáticos
+├── app.py
+├── crud.py
+├── init_db.py
+├── main.py
+├── requirements.txt
+├── README.md
+├── test_mail.py
+├── test_mail_login.py
+├── ventas_app.db
+│
+├── venv/                  # Entorno virtual (NO subir a GitHub)
+│
+├── static/
 │   └── style.css
 │
-└── templates/            # Plantillas HTML
+└── templates/
     ├── base.html
     ├── index.html
+    ├── login.html
+    ├── register.html
     ├── inventario.html
     ├── registrar_producto.html
     ├── registrar_venta.html
     ├── ventas.html
-    └── reporte.html
-`
+    ├── reporte.html
+    │
+    └── emails/
+        ├── welcome.html
+        └── login_notification.html
+```
 
 ---
 
-⚙️ Instalación y uso
+## ⚙️ Instalación y uso
 
-1. Clona el repositorio:
-   `bash
-   git clone 
-   cd ventas_app
-   `
+### 1. Clonar el repositorio
 
-2. 2. Instala dependencias:
-   `bash
-   pip install -r requirements.txt
-   `
+```bash id="clone1"
+git clone https://github.com/TU_USUARIO/ventas-app.git
+cd VENTAS_APP
+```
 
-3. Inicializa la base de datos:
-   `bash
-   python init_db.py
-   `
+---
 
-4. Ejecuta la aplicación:
-   `bash
-   python app.py
-   `
+### 2. Crear entorno virtual (opcional)
 
-5. Abre en tu navegador:
-   `
-   http://127.0.0.1:5000
-   `
+```bash id="venv1"
+python -m venv venv
+venv\Scripts\activate
+```
 
+---
 
-       Licencia
-       
-       Este proyecto está bajo la licencia MIT.  
-       Puedes usarlo, modificarlo y distribuirlo libremente, siempre dando crédito al autor.
+### 3. Instalar dependencias
+
+```bash id="deps1"
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Inicializar base de datos
+
+```bash id="db1"
+python init_db.py
+```
+
+---
+
+### 5. Configurar correo (IMPORTANTE)
+
+En `app.py` configura:
+
+```python id="mail1"
+EMAIL = "tu_correo@gmail.com"
+PASSWORD = "tu_password_de_aplicacion"
+```
+
+🔐 Usa una **contraseña de aplicación de Gmail**
+
+---
+
+### 6. Ejecutar la aplicación
+
+```bash id="run1"
+python app.py
+```
+
+---
+
+### 7. Abrir en el navegador
+
+```id="url1"
+http://127.0.0.1:5000
+```
+
+---
+
+## 🔐 Tecnologías utilizadas
+
+* Python 3.12.3

@@ -12,22 +12,52 @@
     <header>
         <h1>Ventas App</h1>
         <nav>
-            <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Inicio</a>
+            <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Inicio</a> {% if session.get("usuario_nombre") %}
             <a href="{{ url_for('inventario') }}"><i class="fas fa-boxes"></i> Inventario</a>
             <a href="{{ url_for('ventas') }}"><i class="fas fa-receipt"></i> Ventas</a>
             <a href="{{ url_for('registrar_producto') }}"><i class="fas fa-plus-square"></i> Registrar producto</a>
             <a href="{{ url_for('registrar_venta') }}"><i class="fas fa-cash-register"></i> Registrar venta</a>
             <a href="{{ url_for('reporte') }}"><i class="fas fa-chart-line"></i> Reporte</a>
+            <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a> {% else %}
+            <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a>
+            <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> Registrarse</a> {% endif %}
+
+            <!-- Botón para cambiar tema -->
+            <button id="toggleTheme" class="btn"><i class="fas fa-adjust"></i> Cambiar tema</button>
         </nav>
     </header>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <main>
         {% block content %}{% endblock %}
     </main>
 
     <footer>
-        <p>© 2026 Ventas App - Desarrollado por horizonte innova</p>
+        <p>© 2026 Ventas App - Desarrollado por cristian</p>
     </footer>
+
+    <!-- Script para alternar tema claro/oscuro -->
+    <script>
+        const toggleBtn = document.getElementById("toggleTheme");
+        toggleBtn.addEventListener("click", () => {
+            document.body.classList.toggle("dark-mode");
+
+            // Guardar preferencia en localStorage
+            if (document.body.classList.contains("dark-mode")) {
+                localStorage.setItem("theme", "dark");
+            } else {
+                localStorage.setItem("theme", "light");
+            }
+        });
+
+        // Cargar preferencia al abrir la página
+        window.onload = () => {
+            if (localStorage.getItem("theme") === "dark") {
+                document.body.classList.add("dark-mode");
+            }
+        };
+    </script>
 </body>
 
 </html>

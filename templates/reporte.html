@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+
+{% block title %}Reporte{% endblock %}
+
 {% block content %}
 <div class="container">
     <h1>Reporte de Ganancias</h1>
@@ -7,12 +10,16 @@
     <h2>💰 Ganancias totales: ${{ ganancias }}</h2>
 
     <!-- Gráfica de ganancias por producto -->
-    <h2>📊 Ganancias por producto</h2>
-    <canvas id="gananciasChart"></canvas>
+    <section class="grafica">
+        <h2>📊 Ganancias por producto</h2>
+        <canvas id="gananciasChart"></canvas>
+    </section>
 
     <!-- Gráfica de productos más vendidos -->
-    <h2>🥇 Productos más vendidos</h2>
-    <canvas id="productosChart"></canvas>
+    <section class="grafica">
+        <h2>🥇 Productos más vendidos</h2>
+        <canvas id="productosChart"></canvas>
+    </section>
 </div>
 
 <!-- Script de Chart.js -->
@@ -37,7 +44,10 @@
             datasets: [{
                 label: 'Cantidad vendida',
                 data: cantidades,
-                backgroundColor: ['#1abc9c','#3498db','#9b59b6','#f39c12','#e74c3c']
+                backgroundColor: [
+                    '#1abc9c','#3498db','#9b59b6','#f39c12','#e74c3c',
+                    '#2ecc71','#e67e22','#34495e','#d35400','#7f8c8d'
+                ]
             }]
         }
     });
@@ -54,9 +64,14 @@
             }]
         },
         options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: { stepSize: 1000 }
                 }
             }
         }

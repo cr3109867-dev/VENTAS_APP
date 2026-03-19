@@ -1,19 +1,32 @@
 {% extends "base.html" %} {% block title %}Registrar venta{% endblock %} {% block content %}
-<h2>Registrar nueva venta</h2>
-<form method="POST">
-    <label>Producto:</label>
-    <select name="producto_id" required>
-        {% for producto in productos %}
-        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
-        {% endfor %}
-    </select>
+<div class="container">
+    <h2>Registrar nueva venta</h2>
 
-    <label>Cantidad:</label>
-    <input type="number" name="cantidad" required>
+    <form method="POST" class="form-venta">
+        <div class="form-group">
+            <label for="producto_id">Producto:</label>
+            <select id="producto_id" name="producto_id" required>
+                {% for producto in productos %}
+                <option value="{{ producto.id }}">
+                    {{ producto.nombre }} (Stock: {{ producto.cantidad }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <label>Cliente:</label>
-    <input type="text" name="cliente" required>
+        <div class="form-group">
+            <label for="cantidad">Cantidad:</label>
+            <input type="number" id="cantidad" name="cantidad" placeholder="Ej: 2" required>
+        </div>
 
-    <button type="submit"><i class="fas fa-check-circle"></i> Guardar venta</button>
-</form>
+        <div class="form-group">
+            <label for="cliente">Cliente:</label>
+            <input type="text" id="cliente" name="cliente" placeholder="Ej: Juan Pérez" required>
+        </div>
+
+        <button type="submit" class="btn guardar">
+            <i class="fas fa-check-circle"></i> Guardar venta
+        </button>
+    </form>
+</div>
 {% endblock %}

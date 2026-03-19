@@ -1,7 +1,7 @@
 /* Estilos generales */
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
     background: #f4f6f9;
@@ -9,19 +9,33 @@ body {
 }
 
 
+/* Encabezado */
+
+header {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 15px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+
 /* Barra de navegación */
 
 nav {
-    background: #2c3e50;
-    padding: 10px;
-    text-align: center;
+    margin-top: 10px;
 }
 
 nav a {
     color: #ecf0f1;
-    margin: 0 15px;
+    margin: 0 12px;
     text-decoration: none;
     font-weight: bold;
+    transition: color 0.3s ease;
 }
 
 nav a:hover {
@@ -35,9 +49,9 @@ nav a:hover {
     width: 90%;
     margin: 20px auto;
     background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -46,23 +60,30 @@ nav a:hover {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 15px;
+    margin-top: 20px;
+    font-size: 0.95rem;
 }
 
 table th,
 table td {
     border: 1px solid #ddd;
-    padding: 10px;
+    padding: 12px;
     text-align: center;
 }
 
 table th {
     background: #34495e;
     color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 table tr:nth-child(even) {
     background: #f9f9f9;
+}
+
+table tr:hover {
+    background: #ecf0f1;
 }
 
 
@@ -73,15 +94,19 @@ button,
     background: #1abc9c;
     color: #fff;
     border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
+    padding: 10px 15px;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
 }
 
 button:hover,
 .btn:hover {
     background: #16a085;
+    transform: scale(1.05);
 }
 
 
@@ -99,23 +124,41 @@ button:hover,
 /* Formularios */
 
 form {
-    margin: 15px 0;
+    margin: 20px 0;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    color: #2c3e50;
 }
 
 input,
 select {
-    padding: 8px;
+    padding: 10px;
     margin: 5px 0;
     width: 100%;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 6px;
+    transition: border-color 0.3s ease;
+}
+
+input:focus,
+select:focus {
+    border-color: #1abc9c;
+    outline: none;
 }
 
 
 /* Alerta de stock bajo */
 
 .bajo-stock {
-    color: red;
+    color: #e74c3c;
     font-weight: bold;
 }
 
@@ -126,4 +169,64 @@ h1,
 h2 {
     color: #2c3e50;
     text-align: center;
+    margin-bottom: 15px;
+}
+
+
+/* Footer */
+
+footer {
+    background: #2c3e50;
+    color: #ecf0f1;
+    text-align: center;
+    padding: 10px;
+    margin-top: 30px;
+    font-size: 0.85rem;
+}
+
+
+/* =========================
+   Tema oscuro
+   ========================= */
+
+body.dark-mode {
+    background: #1e272e;
+    color: #ecf0f1;
+}
+
+body.dark-mode header,
+body.dark-mode nav,
+body.dark-mode footer {
+    background: #000000;
+    color: #ecf0f1;
+}
+
+body.dark-mode nav a {
+    color: #ecf0f1;
+}
+
+body.dark-mode nav a:hover {
+    color: #1abc9c;
+}
+
+body.dark-mode .container {
+    background: #2f3640;
+    color: #ecf0f1;
+}
+
+body.dark-mode table th {
+    background: #000000;
+    color: #ecf0f1;
+}
+
+body.dark-mode table td {
+    background: #353b48;
+    color: #ecf0f1;
+}
+
+body.dark-mode input,
+body.dark-mode select {
+    background: #353b48;
+    color: #ecf0f1;
+    border: 1px solid #555;
 }
