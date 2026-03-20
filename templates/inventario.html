@@ -2,6 +2,7 @@
 <div class="container">
     <h1>Inventario de productos</h1>
 
+    <!-- Botón registrar nuevo producto -->
     <a href="{{ url_for('registrar_producto') }}" class="btn">➕ Registrar nuevo producto</a>
 
     <table>
@@ -28,7 +29,10 @@
                 </td>
                 <td>{{ producto.proveedor }}</td>
                 <td>
+                    <!-- >>> corregido: botón editar apunta a la ruta editar_producto <<< -->
                     <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn editar">✏️ Editar</a>
+
+                    <!-- >>> corregido: eliminar con método POST <<< -->
                     <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;">
                         <button type="submit" class="btn cancelar">🗑️ Eliminar</button>
                     </form>

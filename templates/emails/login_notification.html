@@ -1,45 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            padding: 20px;
-        }
-        
-        .card {
-            background-color: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid #ddd;
-        }
-        
-        h2 {
-            color: #27ae60;
-        }
-        
-        p {
-            font-size: 14px;
-            color: #333;
-        }
-        
-        .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #aaa;
-        }
-    </style>
 </head>
 
-<body>
-    <div class="card">
-        <h2>Inicio de sesión exitoso</h2>
-        <p>Hola {{ nombre }}, acabas de iniciar sesión en el sistema de ventas.</p>
-        <p>Si no reconoces esta actividad, por favor cambia tu contraseña.</p>
-        <div class="footer">© 2026 Sistema de Ventas</div>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    <div style="background-color:#fff; border-radius:8px; padding:20px; border:1px solid #ddd;">
+        <h2 style="color:#27ae60; font-family:Arial,sans-serif;">Inicio de sesión exitoso</h2>
+        <p style="font-size:14px; color:#333;">Hola {{ nombre }}, acabas de iniciar sesión en el sistema de ventas.</p>
+        <p style="font-size:14px; color:#333;">Si no reconoces esta actividad, por favor cambia tu contraseña.</p>
+
+        <!-- ✅ Botón de acción -->
+        <p>
+            <a href="{{ url_for('forgot_password', _external=True) }}" style="display:inline-block; padding:10px 20px; background:#27ae60; color:#fff; text-decoration:none; border-radius:5px; font-size:14px;">
+               Cambiar contraseña
+            </a>
+        </p>
+
+        <div style="margin-top:20px; font-size:12px; color:#aaa;">
+            © 2026 Ventas App - Desarrollado por Cristian
+        </div>
     </div>
 </body>
 
