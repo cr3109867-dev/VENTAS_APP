@@ -1,36 +1,113 @@
 {% extends "base.html" %} {% block title %}Ventas{% endblock %} {% block content %}
-<div class="container">
-    <h1>Listado de Ventas</h1>
 
-    <a href="{{ url_for('registrar_venta') }}" class="btn">➕ Registrar nueva venta</a>
+<div class="container mt-4">
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Precio unitario</th>
-                <th>Total</th>
-                <th>Vendedor</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for v in ventas %}
-            <tr>
-                <td>{{ v.id }}</td>
-                <td>{{ v.fecha }}</td>
-                <td>{{ v.cliente }}</td>
-                <td>{{ v.nombre }}</td>
-                <td>{{ v.cantidad }}</td>
-                <td>${{ v.precio }}</td>
-                <td>${{ v.cantidad * v.precio }}</td>
-                <td>{{ v.vendedor if v.vendedor else "N/A" }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🧾 Ventas</h2>
+
+        <a href="{{ url_for('registrar_venta') }}" class="btn btn-success">
+            ➕ Nueva Venta
+        </a>
+    </div>
+
+    <!-- KPI -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Total ventas</h6>
+                <h4 class="fw-bold">{{ ventas|length }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div class="mb-3">
+        <input type="text" id="buscador" class="form-control" placeholder="🔍 Buscar por cliente o producto...">
+    </div>
+
+    {% if ventas|length == 0 %}
+
+    <!-- ESTADO VACÍO -->
+    <div class="alert alert-info text-center">
+        No hay ventas registradas
+    </div>
+
+    {% else %}
+
+    <!-- TABLA -->
+    <div class="table-responsive shadow rounded">
+        <table class="table table-hover table-bordered align-middle text-center" id="tablaVentas">
+
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>📅 Fecha</th>
+                    <th>👤 Cliente</th>
+                    <th>📦 Producto</th>
+                    <th>🔢 Cantidad</th>
+                    <th>💲 Precio</th>
+                    <th>💰 Total</th>
+                    <th>🧑‍💼 Vendedor</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for v in ventas %}
+                <tr>
+
+                    <td>{{ v.id }}</td>
+
+                    <!-- Fecha -->
+                    <td>{{ v.fecha }}</td>
+
+                    <!-- Cliente -->
+                    <td>{{ v.cliente }}</td>
+
+                    <!-- Producto -->
+                    <td class="fw-semibold">{{ v.nombre }}</td>
+
+                    <!-- Cantidad -->
+                    <td>{{ v.cantidad }}</td>
+
+                    <!-- Precio -->
+                    <td class="text-success fw-bold">
+                        ${{ "{:,.0f}".format(v.precio) }}
+                    </td>
+
+                    <!-- Total -->
+                    <td class="fw-bold text-primary">
+                        ${{ "{:,.0f}".format(v.cantidad * v.precio) }}
+                    </td>
+
+                    <!-- Vendedor -->
+                    <td>
+                        {{ v.vendedor if v.vendedor else "N/A" }}
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    {% endif %}
+
 </div>
+
+<!-- SCRIPT PRO -->
+<script>
+    // BUSCADOR EN TIEMPO REAL
+    document.getElementById("buscador").addEventListener("keyup", function() {
+        let filtro = this.value.toLowerCase();
+        let filas = document.querySelectorAll("#tablaVentas tbody tr");
+
+        filas.forEach(fila => {
+            let texto = fila.innerText.toLowerCase();
+            fila.style.display = texto.includes(filtro) ? "" : "none";
+        });
+    });
+</script>
+
 {% endblock %}

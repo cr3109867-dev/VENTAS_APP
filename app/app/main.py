@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import csv
-from crud import registrar_usuario, listar_usuarios, actualizar_usuario, borrar_usuario
+from app.crud import registrar_usuario, listar_usuarios, actualizar_usuario, borrar_usuario
 
 def registrar():
     nombre = entry_nombre.get()

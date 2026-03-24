@@ -1,36 +1,82 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block title %}Login{% endblock %} {% block content %}
+
 <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <div class="card shadow-sm p-4">
-                <h3 class="text-center mb-4">Iniciar sesión</h3>
 
-                <!-- Mensajes flash -->
-                {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+
+        <div class="col-md-5">
+
+            <div class="card shadow-lg border-0 p-4">
+
+                <!-- HEADER -->
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">🔐 Bienvenido</h2>
+                    <p class="text-muted">Inicia sesión en tu cuenta</p>
                 </div>
-                {% endfor %} {% endif %} {% endwith %}
 
-                <!-- Formulario -->
-                <form method="POST" action="{{ url_for('login') }}">
+                <!-- FORM -->
+                <form method="POST" action="{{ url_for('login') }}" onsubmit="mostrarLoader()">
+
+                    <!-- CORREO -->
                     <div class="mb-3">
-                        <label for="correo" class="form-label">Correo</label>
-                        <input type="email" class="form-control" id="correo" name="correo" required>
+                        <label class="form-label">Correo electrónico</label>
+                        <input type="email" class="form-control" name="correo" id="correo" placeholder="ejemplo@gmail.com" required>
                     </div>
+
+                    <!-- PASSWORD -->
                     <div class="mb-3">
-                        <label for="contraseña" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" id="contraseña" name="contraseña" required>
+                        <label class="form-label">Contraseña</label>
+
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="contraseña" id="contraseña" required>
+
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword()">
+                                👁️
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Entrar</button>
+
+                    <!-- BOTÓN -->
+                    <button type="submit" id="btnLogin" class="btn btn-primary w-100">
+                        Iniciar sesión
+                    </button>
+
                 </form>
 
+                <!-- LINKS -->
                 <div class="text-center mt-3">
                     <a href="{{ url_for('forgot_password') }}">¿Olvidaste tu contraseña?</a>
                 </div>
+
+                <div class="text-center mt-2">
+                    <small>
+                        ¿No tienes cuenta?
+                        <a href="{{ url_for('register') }}">Regístrate</a>
+                    </small>
+                </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
+<!-- SCRIPT PRO -->
+<script>
+    // Mostrar/ocultar contraseña
+    function togglePassword() {
+        const input = document.getElementById("contraseña");
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    // Loader en botón
+    function mostrarLoader() {
+        const btn = document.getElementById("btnLogin");
+        btn.innerHTML = "Ingresando...";
+        btn.disabled = true;
+    }
+</script>
+
 {% endblock %}

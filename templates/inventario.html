@@ -1,45 +1,106 @@
 {% extends "base.html" %} {% block title %}Inventario{% endblock %} {% block content %}
-<div class="container">
-    <h1>Inventario de productos</h1>
 
-    <!-- Botón registrar nuevo producto -->
-    <a href="{{ url_for('registrar_producto') }}" class="btn">➕ Registrar nuevo producto</a>
+<div class="container mt-4">
 
-    <table>
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Cantidad</th>
-                <th>Proveedor</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for producto in productos %}
-            <tr>
-                <td>{{ producto.nombre }}</td>
-                <td>{{ producto.categoria }}</td>
-                <td>${{ producto.precio }}</td>
-                <td>
-                    {% if producto.cantidad
-                    < 5 %} <span class="bajo-stock">{{ producto.cantidad }} ⚠️ Bajo stock</span>
-                        {% else %} {{ producto.cantidad }} {% endif %}
-                </td>
-                <td>{{ producto.proveedor }}</td>
-                <td>
-                    <!-- >>> corregido: botón editar apunta a la ruta editar_producto <<< -->
-                    <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn editar">✏️ Editar</a>
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📦 Inventario de Productos</h2>
 
-                    <!-- >>> corregido: eliminar con método POST <<< -->
-                    <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;">
-                        <button type="submit" class="btn cancelar">🗑️ Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% if session.get("rol") == "admin" %}
+        <a href="{{ url_for('registrar_producto') }}" class="btn btn-success">
+            ➕ Nuevo Producto
+        </a> {% endif %}
+    </div>
+
+    <!-- ESTADO VACÍO -->
+    {% if productos|length == 0 %}
+    <div class="alert alert-info text-center">
+        No hay productos registrados
+    </div>
+    {% else %}
+
+    <!-- TABLA -->
+    <div class="table-responsive shadow rounded">
+        <table class="table table-hover table-bordered align-middle text-center mb-0">
+
+            <thead class="table-dark">
+                <tr>
+                    <th>📦 Nombre</th>
+                    <th>🏷️ Categoría</th>
+                    <th>💲 Precio</th>
+                    <th>📊 Stock</th>
+                    <th>🚚 Proveedor</th>
+                    <th>⚙️ Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+
+                    <!-- Nombre -->
+                    <td class="fw-semibold">{{ producto.nombre }}</td>
+
+                    <!-- Categoría -->
+                    <td>{{ producto.categoria }}</td>
+
+                    <!-- Precio -->
+                    <td class="fw-bold text-success">
+                        ${{ "{:,.0f}".format(producto.precio) }}
+                    </td>
+
+                    <!-- Stock -->
+                    <td>
+                        {% if producto.cantidad == 0 %}
+                        <span class="badge bg-danger">
+                                ❌ Sin stock
+                            </span> {% elif producto.cantidad
+                        < 5 %} <span class="badge bg-warning text-dark">
+                            ⚠️ Bajo ({{ producto.cantidad }})
+                            </span>
+
+                            {% else %}
+                            <span class="badge bg-success">
+                                ✅ {{ producto.cantidad }}
+                            </span> {% endif %}
+                    </td>
+
+                    <!-- Proveedor -->
+                    <td>{{ producto.proveedor }}</td>
+
+                    <!-- Acciones -->
+                    <td>
+
+                        {% if session.get("rol") == "admin" %}
+
+                        <!-- Editar -->
+                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm">
+                            ✏️
+                        </a>
+
+                        <!-- Eliminar -->
+                        <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?')">
+
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                🗑️
+                            </button>
+
+                        </form>
+
+                        {% else %}
+                        <span class="text-muted">🔒</span> {% endif %}
+
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    {% endif %}
+
 </div>
+
 {% endblock %}

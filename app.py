@@ -2,41 +2,37 @@
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
-from datetime import datetime, timedelta   # ⬅️ Importamos timedelta
+from datetime import datetime, timedelta
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from werkzeug.security import generate_password_hash, check_password_hash  # 🔐 seguridad
-import uuid  # para generar tokens únicos
+from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_segura"
-
-# ⬅️ Configuración de expiración de sesión
 app.permanent_session_lifetime = timedelta(minutes=30)
 
-# 🔐 CONFIGURACIÓN DE CORREO
 EMAIL = "cr3109867@gmail.com"
-PASSWORD = "ksjg crnr jsvo acys"  # contraseña de aplicación de Gmail
+PASSWORD = "ksjg crnr jsvo acys"
 
 # ---------------------------
-# Conexión a base de datos
+# DB
 # ---------------------------
 def get_db_connection():
     conn = sqlite3.connect("ventas_app.db")
     conn.row_factory = sqlite3.Row
-    conn.text_factory = lambda b: b.decode("utf-8")  # ✅ UTF-8 correcto
+    conn.text_factory = lambda b: b.decode("utf-8")
     return conn
 
 # ---------------------------
-# Enviar correo
+# EMAIL
 # ---------------------------
 def enviar_correo(destinatario, asunto, html, remitente=EMAIL):
     msg = MIMEMultipart("alternative")
     msg["Subject"] = str(asunto)
     msg["From"] = remitente
     msg["To"] = destinatario
-
     msg.attach(MIMEText(html, "html", "utf-8"))
 
     try:
@@ -44,19 +40,18 @@ def enviar_correo(destinatario, asunto, html, remitente=EMAIL):
             server.starttls()
             server.login(EMAIL, PASSWORD)
             server.sendmail(remitente, destinatario, msg.as_string())
-            print("✅ Correo enviado correctamente")
     except Exception as e:
-        print("❌ Error enviando correo:", e)
+        print("Error correo:", e)
 
 # ---------------------------
-# Página principal
+# INDEX
 # ---------------------------
 @app.route("/")
 def index():
     return render_template("index.html")
 
 # ---------------------------
-# Registro
+# REGISTER
 # ---------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -65,35 +60,27 @@ def register():
         contraseña = request.form["contraseña"]
         nombre = request.form["nombre"]
 
-        if not correo or not contraseña or not nombre:
-            flash("⚠️ Todos los campos son obligatorios.", "warning")
-            return redirect(url_for("register"))
-
         contraseña_hash = generate_password_hash(contraseña)
 
         conn = get_db_connection()
         try:
             conn.execute(
                 "INSERT INTO usuarios (correo, contraseña, nombre, rol) VALUES (?, ?, ?, ?)",
-                (correo, contraseña_hash, nombre, "vendedor"),
+                (correo, contraseña_hash, nombre, "usuario"),
             )
             conn.commit()
-        except sqlite3.IntegrityError:
-            conn.close()
-            flash("⚠️ El correo ya está registrado.", "warning")
+        except:
+            flash("Correo ya registrado", "danger")
             return redirect(url_for("register"))
         conn.close()
 
-        html = render_template("emails/welcome.html", nombre=str(nombre))
-        enviar_correo(correo, u"Bienvenido al sistema de ventas", html)
-
-        flash("✅ Registro exitoso, ahora puedes iniciar sesión.", "success")
+        flash("Registro exitoso", "success")
         return redirect(url_for("login"))
 
     return render_template("register.html")
 
 # ---------------------------
-# Login
+# LOGIN
 # ---------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -102,90 +89,84 @@ def login():
         contraseña = request.form["contraseña"]
 
         conn = get_db_connection()
-        usuario = conn.execute("SELECT * FROM usuarios WHERE correo=?", (correo,)).fetchone()
+        usuario = conn.execute(
+            "SELECT * FROM usuarios WHERE correo=?", (correo,)
+        ).fetchone()
         conn.close()
 
         if usuario and check_password_hash(usuario["contraseña"], contraseña):
-            # ⬅️ Activamos sesión permanente
             session.permanent = True
-
             session["usuario_id"] = usuario["id"]
             session["usuario_nombre"] = usuario["nombre"]
-            session["rol"] = usuario["rol"]
+            session["rol"] = usuario["rol"] if usuario["rol"] else "usuario"
 
-            html = render_template("emails/login_notification.html", nombre=str(usuario["nombre"]))
-            enviar_correo(correo, u"Notificación de inicio de sesión", html)
-
-            flash("✅ Bienvenido, " + usuario["nombre"], "success")
+            flash("Bienvenido " + usuario["nombre"], "success")
             return redirect(url_for("index"))
-        else:
-            flash("❌ Correo o contraseña incorrectos.", "danger")
+
+        flash("Datos incorrectos", "danger")
 
     return render_template("login.html")
 
 # ---------------------------
-# Logout
-# ---------------------------
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("✅ Sesión cerrada correctamente.", "info")
-    return redirect(url_for("index"))
-
-# ---------------------------
-# Recuperación de contraseña
+# FORGOT PASSWORD
 # ---------------------------
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
         correo = request.form["correo"]
 
-        conn = get_db_connection()
-        usuario = conn.execute("SELECT * FROM usuarios WHERE correo=?", (correo,)).fetchone()
-        conn.close()
-
-        if usuario:
-            token = str(uuid.uuid4())
-            conn = get_db_connection()
-            conn.execute("UPDATE usuarios SET reset_token=? WHERE correo=?", (token, correo))
-            conn.commit()
-            conn.close()
-
-            reset_link = url_for("reset_password", token=token, _external=True)
-            html = f"<p>Hola {usuario['nombre']},</p><p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p><a href='{reset_link}'>Restablecer contraseña</a>"
-            enviar_correo(correo, "Recuperación de contraseña", html)
-
-            flash("📧 Se ha enviado un enlace de recuperación a tu correo.", "info")
-            return redirect(url_for("login"))
-        else:
-            flash("⚠️ El correo no está registrado.", "warning")
+        # Aquí podrías generar un token y enviar un correo con el enlace de recuperación
+        flash("Si el correo existe, se enviará un enlace de recuperación", "info")
+        return redirect(url_for("login"))
 
     return render_template("forgot_password.html")
 
-@app.route("/reset_password/<token>", methods=["GET", "POST"])
-def reset_password(token):
-    if request.method == "POST":
-        nueva_contraseña = request.form["contraseña"]
-        contraseña_hash = generate_password_hash(nueva_contraseña)
-
-        conn = get_db_connection()
-        usuario = conn.execute("SELECT * FROM usuarios WHERE reset_token=?", (token,)).fetchone()
-
-        if usuario:
-            conn.execute("UPDATE usuarios SET contraseña=?, reset_token=NULL WHERE id=?", (contraseña_hash, usuario["id"]))
-            conn.commit()
-            conn.close()
-            flash("✅ Tu contraseña ha sido restablecida. Ahora puedes iniciar sesión.", "success")
-            return redirect(url_for("login"))
-        else:
-            conn.close()
-            flash("⚠️ Token inválido o expirado.", "danger")
-            return redirect(url_for("forgot_password"))
-
-    return render_template("reset_password.html", token=token)
+# ---------------------------
+# LOGOUT
+# ---------------------------
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
 
 # ---------------------------
-# Inventario
+# USUARIOS (ADMIN)
+# ---------------------------
+@app.route("/usuarios")
+def usuarios():
+    if session.get("rol") != "admin":
+        return redirect(url_for("index"))
+
+    conn = get_db_connection()
+    usuarios = conn.execute("SELECT id, nombre, correo, rol FROM usuarios").fetchall()
+    conn.close()
+
+    return render_template("usuarios.html", usuarios=usuarios)
+
+# ---------------------------
+# CAMBIAR ROL
+# ---------------------------
+@app.route("/cambiar_rol/<int:id>")
+def cambiar_rol(id):
+    if session.get("rol") != "admin":
+        return redirect(url_for("index"))
+
+    if id == session.get("usuario_id"):
+        return redirect(url_for("usuarios"))
+
+    conn = get_db_connection()
+    usuario = conn.execute("SELECT rol FROM usuarios WHERE id=?", (id,)).fetchone()
+
+    nuevo_rol = "admin" if usuario["rol"] == "usuario" else "usuario"
+
+    conn.execute("UPDATE usuarios SET rol=? WHERE id=?", (nuevo_rol, id))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("usuarios"))
+
+# ---------------------------
+# INVENTARIO
 # ---------------------------
 @app.route("/inventario")
 def inventario():
@@ -195,25 +176,24 @@ def inventario():
     return render_template("inventario.html", productos=productos)
 
 # ---------------------------
-# Registrar producto (solo admin)
+# REGISTRAR PRODUCTO (ADMIN)
 # ---------------------------
 @app.route("/registrar_producto", methods=["GET", "POST"])
 def registrar_producto():
     if session.get("rol") != "admin":
-        flash("⚠️ No tienes permisos para registrar productos.", "danger")
         return redirect(url_for("inventario"))
 
     if request.method == "POST":
-        nombre = request.form["nombre"]
-        categoria = request.form["categoria"]
-        precio = float(request.form["precio"])
-        cantidad = int(request.form["cantidad"])
-        proveedor = request.form["proveedor"]
-
         conn = get_db_connection()
         conn.execute(
             "INSERT INTO productos (nombre, categoria, precio, cantidad, proveedor) VALUES (?, ?, ?, ?, ?)",
-            (nombre, categoria, precio, cantidad, proveedor),
+            (
+                request.form["nombre"],
+                request.form["categoria"],
+                float(request.form["precio"]),
+                int(request.form["cantidad"]),
+                request.form["proveedor"],
+            ),
         )
         conn.commit()
         conn.close()
@@ -222,27 +202,27 @@ def registrar_producto():
     return render_template("registrar_producto.html")
 
 # ---------------------------
-# Editar producto (solo admin)
+# EDITAR PRODUCTO
 # ---------------------------
 @app.route("/editar_producto/<int:id>", methods=["GET", "POST"])
 def editar_producto(id):
     if session.get("rol") != "admin":
-        flash("⚠️ No tienes permisos para editar productos.", "danger")
         return redirect(url_for("inventario"))
 
     conn = get_db_connection()
-    producto = conn.execute("SELECT * FROM productos WHERE id = ?", (id,)).fetchone()
+    producto = conn.execute("SELECT * FROM productos WHERE id=?", (id,)).fetchone()
 
     if request.method == "POST":
-        nombre = request.form["nombre"]
-        categoria = request.form["categoria"]
-        precio = float(request.form["precio"])
-        cantidad = int(request.form["cantidad"])
-        proveedor = request.form["proveedor"]
-
         conn.execute(
             "UPDATE productos SET nombre=?, categoria=?, precio=?, cantidad=?, proveedor=? WHERE id=?",
-            (nombre, categoria, precio, cantidad, proveedor, id),
+            (
+                request.form["nombre"],
+                request.form["categoria"],
+                float(request.form["precio"]),
+                int(request.form["cantidad"]),
+                request.form["proveedor"],
+                id,
+            ),
         )
         conn.commit()
         conn.close()
@@ -251,21 +231,16 @@ def editar_producto(id):
     conn.close()
     return render_template("editar_producto.html", producto=producto)
 
-
-    # mostrar formulario con datos precargados
-    return render_template("editar_producto.html", producto=producto)
-
 # ---------------------------
-# Eliminar producto (solo admin)
+# ELIMINAR PRODUCTO
 # ---------------------------
 @app.route("/eliminar_producto/<int:id>", methods=["POST"])
 def eliminar_producto(id):
     if session.get("rol") != "admin":
-        flash("⚠️ No tienes permisos para eliminar productos.", "danger")
         return redirect(url_for("inventario"))
 
     conn = get_db_connection()
-    conn.execute("DELETE FROM productos WHERE id = ?", (id,))
+    conn.execute("DELETE FROM productos WHERE id=?", (id,))
     conn.commit()
     conn.close()
     return redirect(url_for("inventario"))

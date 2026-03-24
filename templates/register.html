@@ -1,40 +1,124 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block title %}Registro{% endblock %} {% block content %}
+
 <div class="container mt-5">
-    <div class="row justify-content-center">
+
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+
         <div class="col-md-5">
-            <div class="card shadow-sm p-4">
-                <h3 class="text-center mb-4">Registro de usuario</h3>
 
-                <!-- Mensajes flash -->
-                {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="card shadow-lg border-0 p-4">
+
+                <!-- HEADER -->
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">📝 Crear cuenta</h2>
+                    <p class="text-muted">Regístrate para comenzar</p>
                 </div>
-                {% endfor %} {% endif %} {% endwith %}
 
-                <!-- Formulario -->
-                <form method="POST" action="{{ url_for('register') }}">
+                <!-- FORM -->
+                <form method="POST" action="{{ url_for('register') }}" onsubmit="return validarFormulario()">
+
+                    <!-- NOMBRE -->
                     <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" name="nombre" id="nombre" required>
                     </div>
+
+                    <!-- CORREO -->
                     <div class="mb-3">
-                        <label for="correo" class="form-label">Correo</label>
-                        <input type="email" class="form-control" id="correo" name="correo" required>
+                        <label class="form-label">Correo electrónico</label>
+                        <input type="email" class="form-control" name="correo" id="correo" placeholder="ejemplo@gmail.com" required>
                     </div>
+
+                    <!-- CONTRASEÑA -->
                     <div class="mb-3">
-                        <label for="contraseña" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" id="contraseña" name="contraseña" required>
+                        <label class="form-label">Contraseña</label>
+
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="contraseña" id="contraseña" required>
+
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('contraseña')">
+                                👁️
+                            </button>
+                        </div>
+
+                        <small class="text-muted">
+                            Mínimo 6 caracteres
+                        </small>
                     </div>
-                    <button type="submit" class="btn btn-success w-100">Crear cuenta</button>
+
+                    <!-- CONFIRMAR CONTRASEÑA -->
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar contraseña</label>
+
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="confirmar" required>
+
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('confirmar')">
+                                👁️
+                            </button>
+                        </div>
+
+                        <div id="errorPass" class="text-danger mt-1" style="display:none;">
+                            ❌ Las contraseñas no coinciden
+                        </div>
+                    </div>
+
+                    <!-- BOTÓN -->
+                    <button type="submit" id="btnRegister" class="btn btn-success w-100">
+                        Crear cuenta
+                    </button>
+
                 </form>
 
+                <!-- LINK LOGIN -->
                 <div class="text-center mt-3">
-                    <a href="{{ url_for('login') }}">¿Ya tienes cuenta? Inicia sesión</a>
+                    <small>
+                        ¿Ya tienes cuenta?
+                        <a href="{{ url_for('login') }}">Inicia sesión</a>
+                    </small>
                 </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
+<!-- SCRIPT PRO -->
+<script>
+    // Mostrar/ocultar contraseña
+    function togglePassword(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+    }
+
+    // Validación antes de enviar
+    function validarFormulario() {
+        const pass = document.getElementById("contraseña").value;
+        const confirm = document.getElementById("confirmar").value;
+        const error = document.getElementById("errorPass");
+        const btn = document.getElementById("btnRegister");
+
+        if (pass.length < 6) {
+            alert("La contraseña debe tener al menos 6 caracteres");
+            return false;
+        }
+
+        if (pass !== confirm) {
+            error.style.display = "block";
+            return false;
+        } else {
+            error.style.display = "none";
+        }
+
+        // Loader
+        btn.innerHTML = "Creando cuenta...";
+        btn.disabled = true;
+
+        return true;
+    }
+</script>
+
 {% endblock %}

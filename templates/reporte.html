@@ -1,80 +1,145 @@
 {% extends "base.html" %}
 
-{% block title %}Reporte{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Reporte de Ganancias</h1>
 
-    <!-- Ganancias totales -->
-    <h2>💰 Ganancias totales: ${{ ganancias }}</h2>
+<div class="container mt-4">
 
-    <!-- Gráfica de ganancias por producto -->
-    <section class="grafica">
-        <h2>📊 Ganancias por producto</h2>
-        <canvas id="gananciasChart"></canvas>
-    </section>
+    <!-- HEADER -->
+    <div class="mb-4">
+        <h2>📊 Dashboard de Ventas</h2>
+        <p class="text-muted">Resumen general del negocio</p>
+    </div>
 
-    <!-- Gráfica de productos más vendidos -->
-    <section class="grafica">
-        <h2>🥇 Productos más vendidos</h2>
-        <canvas id="productosChart"></canvas>
-    </section>
+    <!-- KPI CARDS -->
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Ganancias Totales</h6>
+                <h3 class="text-success fw-bold">
+                    ${{ "{:,.0f}".format(ganancias) }}
+                </h3>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Productos vendidos</h6>
+                <h3 class="fw-bold">
+                    {{ productos_top|length }}
+                </h3>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Estado</h6>
+                <h3 class="text-primary fw-bold">
+                    Activo
+                </h3>
+            </div>
+        </div>
+
+    </div>
+
+    {% if productos_top|length == 0 %}
+
+        <!-- ESTADO VACÍO -->
+        <div class="alert alert-info text-center">
+            No hay datos de ventas aún
+        </div>
+
+    {% else %}
+
+    <!-- GRÁFICAS -->
+    <div class="row">
+
+        <!-- Productos más vendidos -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow p-3">
+                <h5 class="text-center">🥇 Productos más vendidos</h5>
+                <canvas id="productosChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Ganancias por producto -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow p-3">
+                <h5 class="text-center">💰 Ganancias por producto</h5>
+                <canvas id="gananciasChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    {% endif %}
+
 </div>
 
-<!-- Script de Chart.js -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-    // Datos enviados desde app.py (con |safe para evitar errores de sintaxis)
-    const productos = {{ productos_top | tojson | safe }};
-    const precios = {{ precios_productos | tojson | safe }};
 
-    // Extraer nombres y cantidades
-    const nombres = productos.map(p => p[0]);
-    const cantidades = productos.map(p => p[1]);
+const productos = {{ productos_top | tojson | safe }};
+const precios = {{ precios_productos | tojson | safe }};
 
-    // Calcular ganancias por producto
-    const gananciasPorProducto = cantidades.map((c, i) => c * precios[i]);
+// Procesar datos
+const nombres = productos.map(p => p[0]);
+const cantidades = productos.map(p => p[1]);
+const gananciasPorProducto = cantidades.map((c, i) => c * precios[i]);
 
-    // Gráfica de productos más vendidos (pastel)
-    new Chart(document.getElementById('productosChart'), {
-        type: 'pie',
-        data: {
-            labels: nombres,
-            datasets: [{
-                label: 'Cantidad vendida',
-                data: cantidades,
-                backgroundColor: [
-                    '#1abc9c','#3498db','#9b59b6','#f39c12','#e74c3c',
-                    '#2ecc71','#e67e22','#34495e','#d35400','#7f8c8d'
-                ]
-            }]
-        }
-    });
+// COLORES PRO
+const colores = [
+    '#4CAF50','#2196F3','#FF9800','#E91E63','#9C27B0',
+    '#00BCD4','#8BC34A','#FF5722','#607D8B','#FFC107'
+];
 
-    // Gráfica de ganancias por producto (barras)
-    new Chart(document.getElementById('gananciasChart'), {
-        type: 'bar',
-        data: {
-            labels: nombres,
-            datasets: [{
-                label: 'Ganancias ($)',
-                data: gananciasPorProducto,
-                backgroundColor: '#16a085'
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1000 }
-                }
+// PIE CHART
+new Chart(document.getElementById('productosChart'), {
+    type: 'doughnut',
+    data: {
+        labels: nombres,
+        datasets: [{
+            data: cantidades,
+            backgroundColor: colores
+        }]
+    },
+    options: {
+        plugins: {
+            legend: {
+                position: 'bottom'
             }
         }
-    });
+    }
+});
+
+// BAR CHART
+new Chart(document.getElementById('gananciasChart'), {
+    type: 'bar',
+    data: {
+        labels: nombres,
+        datasets: [{
+            label: 'Ganancias',
+            data: gananciasPorProducto,
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
 </script>
+
 {% endblock %}

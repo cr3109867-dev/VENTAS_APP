@@ -51,22 +51,7 @@ CREATE TABLE IF NOT EXISTS ventas (
 )
 """)
 
-# Insertar productos ficticios (solo si la tabla está vacía)
-productos = [
-    ("Arroz 1kg", "Granos", 5000, 50, "Distribuidora La 14"),
-    ("Aceite 500ml", "Abarrotes", 8000, 30, "Alimentos S.A."),
-    ("Pan artesanal", "Panadería", 2000, 40, "Panadería El Sol"),
-    ("Leche 1L", "Lácteos", 4500, 25, "Lácteos Andinos"),
-    ("Café molido 250g", "Bebidas", 12000, 15, "Café de Colombia"),
-    ("Jabón de baño", "Aseo", 2500, 60, "Higiene Hogar"),
-    ("Gaseosa 1.5L", "Bebidas", 6000, 20, "Bebidas Nacionales"),
-    ("Huevos docena", "Proteína", 7000, 35, "Granja Santa Fé")
-]
 
-cursor.executemany("""
-INSERT INTO productos (nombre, categoria, precio, cantidad, proveedor)
-VALUES (?, ?, ?, ?, ?)
-""", productos)
 
 # Guardar cambios y cerrar conexión
 conn.commit()
