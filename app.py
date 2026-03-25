@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+from itsdangerous import SignatureExpired, BadSignature
+from itsdangerous import URLSafeTimedSerializer
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 from datetime import datetime, timedelta
@@ -10,7 +11,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 
 app = Flask(__name__)
+
+# PRIMERO define la clave
 app.secret_key = "clave_secreta_segura"
+
+# DESPUÉS creas el serializer
+serializer = URLSafeTimedSerializer(app.secret_key)
+
 app.permanent_session_lifetime = timedelta(minutes=30)
 
 EMAIL = "cr3109867@gmail.com"
@@ -100,13 +107,30 @@ def login():
             session["usuario_nombre"] = usuario["nombre"]
             session["rol"] = usuario["rol"] if usuario["rol"] else "usuario"
 
+            # 🔥 ENVIAR CORREO DE LOGIN
+            try:
+                html = render_template(
+                    "emails/login_notification.html",
+                    nombre=usuario["nombre"]
+                )
+
+                enviar_correo(
+                    usuario["correo"],
+                    "Inicio de sesión exitoso",
+                    html
+                )
+
+                print("✅ Correo enviado correctamente")
+
+            except Exception as e:
+                print("❌ Error enviando correo:", e)
+
             flash("Bienvenido " + usuario["nombre"], "success")
             return redirect(url_for("index"))
 
         flash("Datos incorrectos", "danger")
 
     return render_template("login.html")
-
 # ---------------------------
 # FORGOT PASSWORD
 # ---------------------------
@@ -115,12 +139,87 @@ def forgot_password():
     if request.method == "POST":
         correo = request.form["correo"]
 
-        # Aquí podrías generar un token y enviar un correo con el enlace de recuperación
-        flash("Si el correo existe, se enviará un enlace de recuperación", "info")
+        conn = get_db_connection()
+        usuario = conn.execute(
+            "SELECT * FROM usuarios WHERE correo=?", (correo,)
+        ).fetchone()
+        conn.close()
+
+        if usuario:
+            # 🔐 Token seguro con email
+            token = serializer.dumps(correo, salt="password-reset")
+
+            # ⏱ Link con token
+            link = url_for("reset_password", token=token, _external=True)
+
+            html = f"""
+            <h2>🔐 Recuperar contraseña</h2>
+            <p>Hola {usuario["nombre"]},</p>
+            <p>Haz clic en el botón para cambiar tu contraseña:</p>
+
+            <a href="{link}" style="padding:10px 20px;
+            background:#27ae60;color:white;text-decoration:none;border-radius:5px;">
+            Cambiar contraseña
+            </a>
+
+            <p>⚠️ Este enlace expira en 15 minutos</p>
+            """
+
+            enviar_correo(correo, "Recuperar contraseña", html)
+
+        flash("Si el correo existe, se enviará un enlace", "info")
         return redirect(url_for("login"))
 
     return render_template("forgot_password.html")
 
+# ---------------------------
+# RESET PASSWORD
+# ---------------------------
+@app.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        # ⏱ Expira en 900 segundos = 15 min
+        correo = serializer.loads(token, salt="password-reset", max_age=900)
+
+    except SignatureExpired:
+        flash("⏰ El enlace expiró", "danger")
+        return redirect(url_for("forgot_password"))
+
+    except BadSignature:
+        flash("⚠️ Token inválido", "danger")
+        return redirect(url_for("login"))
+
+    conn = get_db_connection()
+    usuario = conn.execute(
+        "SELECT * FROM usuarios WHERE correo=?", (correo,)
+    ).fetchone()
+
+    if not usuario:
+        conn.close()
+        flash("Usuario no encontrado", "danger")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        nueva = request.form["contraseña"]
+
+        if len(nueva) < 6:
+            flash("Mínimo 6 caracteres", "warning")
+            return redirect(request.url)
+
+        hash_nueva = generate_password_hash(nueva)
+
+        conn.execute(
+            "UPDATE usuarios SET contraseña=? WHERE id=?",
+            (hash_nueva, usuario["id"])
+        )
+        conn.commit()
+        conn.close()
+
+        flash("✅ Contraseña actualizada", "success")
+        return redirect(url_for("login"))
+
+    conn.close()
+    return render_template("reset_password.html")
 # ---------------------------
 # LOGOUT
 # ---------------------------

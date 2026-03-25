@@ -3,25 +3,88 @@
 
 <head>
     <meta charset="UTF-8">
+    <title>Inicio de sesión</title>
 </head>
 
-<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-    <div style="background-color:#fff; border-radius:8px; padding:20px; border:1px solid #ddd;">
-        <h2 style="color:#27ae60; font-family:Arial,sans-serif;">Inicio de sesión exitoso</h2>
-        <p style="font-size:14px; color:#333;">Hola {{ nombre }}, acabas de iniciar sesión en el sistema de ventas.</p>
-        <p style="font-size:14px; color:#333;">Si no reconoces esta actividad, por favor cambia tu contraseña.</p>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
 
-        <!-- ✅ Botón de acción -->
-        <p>
-            <a href="{{ url_for('forgot_password', _external=True) }}" style="display:inline-block; padding:10px 20px; background:#27ae60; color:#fff; text-decoration:none; border-radius:5px; font-size:14px;">
-               Cambiar contraseña
-            </a>
-        </p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f8; padding:20px;">
+        <tr>
+            <td align="center">
 
-        <div style="margin-top:20px; font-size:12px; color:#aaa;">
-            © 2026 Ventas App - Desarrollado por Cristian
-        </div>
-    </div>
+                <!-- Contenedor -->
+                <table width="500" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #e0e0e0;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:#27ae60; padding:20px; text-align:center;">
+                            <h1 style="color:#ffffff; margin:0; font-size:20px;">
+                                Ventas App
+                            </h1>
+                        </td>
+                    </tr>
+
+                    <!-- Contenido -->
+                    <tr>
+                        <td style="padding:25px;">
+
+                            <h2 style="color:#27ae60; margin-top:0;">
+                                ✅ Inicio de sesión exitoso
+                            </h2>
+
+                            <p style="color:#333; font-size:14px;">
+                                Hola <strong>{{ nombre }}</strong>,
+                            </p>
+
+                            <p style="color:#333; font-size:14px;">
+                                Detectamos un inicio de sesión en tu cuenta.
+                            </p>
+
+                            <p style="color:#555; font-size:13px;">
+                                📅 Fecha: {{ fecha if fecha else "Ahora" }}<br> 🌐 Dispositivo: Navegador Web
+                            </p>
+
+                            <p style="color:#333; font-size:14px;">
+                                Si fuiste tú, puedes ignorar este mensaje.
+                                <br> Si no reconoces esta actividad, protege tu cuenta inmediatamente.
+                            </p>
+
+                            <!-- Botón -->
+                            <table cellpadding="0" cellspacing="0" style="margin-top:20px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ url_for('forgot_password', _external=True) }}" style="background:#27ae60; color:#ffffff; padding:12px 20px; text-decoration:none; border-radius:6px; font-size:14px; display:inline-block;">
+                                            🔐 Cambiar contraseña
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Fallback link -->
+                            <p style="font-size:12px; color:#888; margin-top:15px;">
+                                Si el botón no funciona, copia este enlace:
+                                <br>
+                                <a href="{{ url_for('forgot_password', _external=True) }}" style="color:#27ae60;">
+                                    {{ url_for('forgot_password', _external=True) }}
+                                </a>
+                            </p>
+
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background:#fafafa; padding:15px; text-align:center; font-size:12px; color:#aaa;">
+                            © 2026 Ventas App <br> Sistema de gestión inteligente
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
 </body>
 
 </html>
