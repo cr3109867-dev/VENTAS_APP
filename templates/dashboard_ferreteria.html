@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Ferretería{% endblock %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">🛠️ Panel de Ferretería</h2>
+
+    <!-- KPIs -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Materiales registrados</h6>
+                    <p class="fs-4 fw-bold">{{ materiales|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Productos con bajo stock</h6>
+                    <p class="fs-4 fw-bold text-danger">{{ bajo_stock|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Stock total</h6>
+                    <p class="fs-4 fw-bold text-success">{{ stock_total }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de materiales -->
+    <h5 class="mt-4">📋 Inventario de materiales</h5>
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Nombre</th>
+                <th>Unidad</th>
+                <th>Stock</th>
+                <th>Precio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in materiales %}
+            <tr>
+                <td>{{ item.nombre }}</td>
+                <td>{{ item.unidad }}</td>
+                <td>{{ item.stock }}</td>
+                <td>${{ item.precio }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Gráfico -->
+    <div class="mt-4">
+        <canvas id="ferreteriaChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctxFer = document.getElementById('ferreteriaChart').getContext('2d');
+    new Chart(ctxFer, {
+        type: 'line',
+        data: {
+            labels: { meses|tojson },
+            datasets: [{
+                label: 'Ventas mensuales',
+                data: {{ ventas|tojson }},
+                borderColor: '#e67e22',
+                backgroundColor: 'rgba(230,126,34,0.2)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Tendencia de ventas de ferretería',
+                    font: { size: 18 }
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 50 }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

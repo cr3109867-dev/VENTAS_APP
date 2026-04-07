@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Mercado{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>🛒 Dashboard Mercado</h2>
+
+    <!-- Gráfico de ventas diarias -->
+    <h4 class="mt-4">Ventas diarias</h4>
+    <canvas id="ventasDiariasChart" height="100"></canvas>
+
+    <!-- Inventario -->
+    <h4 class="mt-4">Inventario de productos</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Stock</th>
+                <th>Precio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in productos %}
+            <tr>
+                <td>{{ p.nombre }}</td>
+                <td>{{ p.stock }}</td>
+                <td>${{ p.precio }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctxMercado = document.getElementById('ventasDiariasChart').getContext('2d');
+    new Chart(ctxMercado, {
+        type: 'bar',
+        data: {
+            labels: ["Lunes", "Martes", "Miércoles", "Jueves"],
+            datasets: [{
+                label: 'Ventas diarias',
+                data: {{ ventas_diarias|tojson }},
+                backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+{% endblock %}

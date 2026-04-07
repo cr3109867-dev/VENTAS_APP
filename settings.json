@@ -1,0 +1,19 @@
+{
+  // Desactiva el autoformato al guardar
+  "editor.formatOnSave": false,
+
+  // Configuración específica para HTML
+  "[html]": {
+    "editor.formatOnSave": false
+  },
+
+  // Configuración específica para Jinja
+  "[jinja]": {
+    "editor.formatOnSave": false
+  },
+
+  // Asociación de archivos .html con Jinja
+  "files.associations": {
+    "*.html": "jinja"
+  }
+}

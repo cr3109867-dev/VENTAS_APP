@@ -1,62 +1,63 @@
-# init_db.py
 import sqlite3
 
-# Conexión a la base de datos principal
-conn = sqlite3.connect("ventas_app.db")
-cursor = conn.cursor()
+def init_db():
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
 
-# Tabla de usuarios (para login)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS usuarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    correo TEXT UNIQUE NOT NULL,
-    contraseña TEXT NOT NULL,
-    nombre TEXT
-)
-""")
+    # Tabla usuarios
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    );
+    """)
 
-# Tabla de inventario (productos simples)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS inventario (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    producto TEXT NOT NULL,
-    precio REAL NOT NULL,
-    stock INTEGER NOT NULL
-)
-""")
+    # Tabla productos
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS productos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        cantidad INTEGER NOT NULL,
+        precio REAL NOT NULL
+    );
+    """)
 
-# Tabla de productos (más detallada, con proveedor y categoría)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS productos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    categoria TEXT,
-    precio REAL NOT NULL,
-    cantidad INTEGER NOT NULL,
-    proveedor TEXT
-)
-""")
+    # Tabla ventas (cabecera)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ventas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fecha TEXT NOT NULL,
+        cliente TEXT NOT NULL,
+        total REAL NOT NULL,
+        usuario_id INTEGER,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    );
+    """)
 
-# Tabla de ventas (relaciona usuarios y productos)
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS ventas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario_id INTEGER,
-    producto_id INTEGER,
-    cantidad INTEGER,
-    fecha TEXT,
-    cliente TEXT,
-    FOREIGN KEY(usuario_id) REFERENCES usuarios(id),
-    FOREIGN KEY(producto_id) REFERENCES productos(id)
-)
-""")
+    # Tabla detalle de ventas
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS detalle_ventas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        venta_id INTEGER NOT NULL,
+        producto_id INTEGER NOT NULL,
+        cantidad INTEGER NOT NULL,
+        precio REAL NOT NULL,
+        FOREIGN KEY (venta_id) REFERENCES ventas(id),
+        FOREIGN KEY (producto_id) REFERENCES productos(id)
+    );
+    """)
 
+    # Datos de prueba
+    cursor.execute("INSERT OR IGNORE INTO usuarios (id, nombre, email, password) VALUES (1, 'Admin', 'admin@test.com', '1234');")
+    cursor.execute("INSERT OR IGNORE INTO productos (id, nombre, cantidad, precio) VALUES (1, 'Producto Prueba', 10, 500);")
 
+    conn.commit()
+    conn.close()
+    print("✅ Base de datos inicializada correctamente.")
 
-# Guardar cambios y cerrar conexión
-conn.commit()
-conn.close()
-
-print("✅ Base de datos 'ventas_app.db' creada con éxito y productos insertados.")
+if __name__ == "__main__":
+    init_db()
 
 

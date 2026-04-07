@@ -1,121 +1,81 @@
-🧾 Ventas App
+# VENTAS_APP
 
-Sistema web completo para la gestión de inventario, ventas y usuarios, desarrollado con Flask y SQLite.
+Sistema de ventas desarrollado con **Flask** y **SQLite**, pensado para la gestión de inventarios, ventas y reportes.  
+Incluye autenticación de usuarios, manejo de productos, generación de reportes con gráficas y exportación de datos.
 
-🚀 Características
-🔐 Autenticación
-Registro de usuarios
-Inicio de sesión seguro (hash de contraseñas)
-Recuperación de contraseña
-Manejo de sesiones
-Roles de usuario (admin / usuario)
-👥 Gestión de usuarios (Admin)
-Ver lista de usuarios
-Cambiar roles (admin / usuario)
-Protección de accesos
-📦 Inventario
-Crear, editar y eliminar productos
-Control de stock en tiempo real
-Alertas de bajo stock
-Gestión de proveedores
-💰 Ventas
-Registro de ventas
-Validación de stock antes de vender
-Historial de ventas
-Buscador en tiempo real
-📊 Reportes
-Dashboard con estadísticas
-Gráficas de productos más vendidos
-Ganancias totales
-Visualización clara del negocio
-🛠️ Tecnologías utilizadas
-Backend: Python + Flask
-Base de datos: SQLite
-Frontend: HTML, CSS, Bootstrap 5
-Gráficas: Chart.js
-Autenticación: Werkzeug (hash de contraseñas)
-📁 Estructura del proyecto
-ventas_app/
-│
-├── app/                    # 🔧 Lógica modular del backend
-│   ├── __init__.py         # Convierte app en paquete Python
-│   ├── main.py             # (Opcional) lógica alternativa o pruebas
-│   ├── crud.py             # Operaciones CRUD (usuarios, productos, etc.)
-│
-├── scripts/                # ⚙️ Scripts auxiliares
-│   └── init_db.py          # Inicialización de base de datos
-│
-├── templates/              # 🎨 Vistas HTML (Jinja2)
-│   ├── emails/             # Plantillas de correos
-│   │   ├── welcome.html
-│   │   └── login_notification.html
-│   │
-│   ├── base.html           # Layout principal
-│   ├── index.html
-│   ├── login.html
-│   ├── register.html
-│   ├── usuarios.html
-│   ├── inventario.html
-│   ├── registrar_producto.html
-│   ├── registrar_venta.html
-│   ├── ventas.html
-│   ├── reporte.html
-│   ├── forgot_password.html
-│   ├── reset_password.html
-│
-├── static/                 # 🎨 Archivos estáticos (CSS, JS)
-│   └── style.css
-│
-├── tests/                  # 🧪 Pruebas
-│   ├── test_mail.py
-│   └── test_mail_login.py
-│
-├── app.py                  # 🚀 Punto principal de la aplicación Flask
-├── ventas_app.db           # 🗄️ Base de datos SQLite
-├── requirements.txt        # 📦 Dependencias
-├── README.md               # 📘 Documentación
-└── .gitignore              # 🚫 Archivos ignorados por Git
-⚙️ Instalación
-Clonar el repositorio:
-git clone https://github.com/cr3109867-dev/sistema-ventas-flask
-cd ventas-app
-Crear entorno virtual:
-python -m venv .venv
-Activar entorno:
-Windows:
-.venv\Scripts\activate
-Mac/Linux:
-source .venv/bin/activate
-Instalar dependencias:
-pip install flask
-Ejecutar la aplicación:
-python app.py
-Abrir en el navegador:
-http://127.0.0.1:5000
-🔐 Usuario administrador
+---
 
-Para crear un administrador manualmente:
+## 🚀 Requisitos previos
 
-UPDATE usuarios SET rol = 'admin' WHERE correo = 'tu_correo@gmail.com';
+- **Python 3.12** (⚠️ obligatorio, no compatible con versiones más nuevas como 3.14).
+- **Git** instalado en el sistema.
+- Entorno virtual recomendado para aislar dependencias.
 
-Ventas
-🌐 Futuras mejoras
-Autenticación con Google
-Base de datos PostgreSQL
-API REST
-Exportación de reportes (PDF / Excel)
-Sistema de suscripciones (SaaS)
-💰 Monetización
+---
 
-Este sistema puede convertirse en un producto SaaS:
+## 📦 Instalación
 
-Cobro mensual por uso
-Planes (Gratis / Premium)
-Implementación en negocios reales
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/cr3109867-dev/VENTAS_APP.git
+   cd VENTAS_APP
+
+## Crear entorno virtual con Python 3.12
+
+py -3.12 -m venv .venv
+.\.venv\Scripts\activate
+
+## Verifica la versión:
+python --version
+
+## Instalar dependencias
+pip install -r requirements.txt
+
+## Inicializar base de datos
+Ejecuta el script de inicialización para crear tablas y datos de prueba:
+python init_db.py
+
+## Ejecutar la aplicación
+flask run
+
+Abre en el navegador: http://127.0.0.1:5000
+
+
+📂 Estructura del proyecto
+app.py → punto de entrada principal de la aplicación Flask
+
+main.py → configuración y arranque de la app
+
+crud.py → funciones auxiliares para operaciones con la base de datos
+
+app/ → lógica principal y controladores
+
+templates/ → vistas HTML (interfaz de usuario)
+
+static/ → archivos estáticos (CSS, JS, imágenes)
+
+scripts/ → utilidades y scripts adicionales
+
+init_db.py → inicialización de la base de datos con tablas y datos de prueba
+
+requirements.txt → dependencias del proyecto
+
+README.md → documentación
+
+
+📊 Funcionalidades principales
+Gestión de inventario (productos, precios, stock).
+
+Registro de ventas con detalle de productos.
+
+Reportes con gráficas (Chart.js).
+
+Cálculo automático de ganancias.
+
+Exportación de datos a Excel y PDF.
+
+Inicialización rápida de la base de datos con init_db.py.
+
+
 👨‍💻 Autor
-
-Desarrollado por Cristian Ramírez
-
-📄 Licencia
-
-Este proyecto es de uso libre para fines educativos o comerciales.
+Desarrollado por Cristian (cr3109867-dev)

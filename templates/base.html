@@ -29,13 +29,36 @@
 
                 {% if session.get("usuario_nombre") %}
 
+                <!-- Opciones dinámicas según negocio -->
+                {% if session.get("negocio") == "farmacia" %}
                 <a href="{{ url_for('inventario') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-boxes"></i> Inventario
+                    <i class="fas fa-pills"></i> Medicamentos
                 </a>
-
                 <a href="{{ url_for('ventas') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-receipt"></i> Ventas
+                    <i class="fas fa-receipt"></i> Ventas Farmacia
                 </a>
+                {% elif session.get("negocio") == "ferreteria" %}
+                <a href="{{ url_for('inventario') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-tools"></i> Materiales
+                </a>
+                <a href="{{ url_for('ventas') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-receipt"></i> Ventas Ferretería
+                </a>
+                {% elif session.get("negocio") == "mercado" %}
+                <a href="{{ url_for('inventario') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-apple-alt"></i> Productos Mercado
+                </a>
+                <a href="{{ url_for('ventas') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-receipt"></i> Ventas Mercado
+                </a>
+                {% elif session.get("negocio") == "tienda_de_ropa" %}
+                <a href="{{ url_for('inventario') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-boxes"></i> Inventario Tienda de Ropa
+                </a>
+                <a href="{{ url_for('ventas') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-receipt"></i> Ventas Tienda de Ropa
+                </a>
+                {% endif %}
 
                 <a href="{{ url_for('registrar_producto') }}" class="btn btn-outline-success btn-sm">
                     <i class="fas fa-plus-square"></i> Producto
@@ -56,6 +79,22 @@
                 </a>
                 {% endif %}
 
+                <!-- Mostrar negocio elegido -->
+                {% if session.get("negocio") %}
+                <span class="badge bg-primary">
+                    Negocio: {{ session['negocio']|replace('_',' ')|capitalize }}
+                </span>
+                <!-- Botón para cambiar negocio -->
+                <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-warning btn-sm">
+                    <i class="fas fa-sync-alt"></i> Cambiar negocio
+                </a>
+                {% endif %}
+
+                <!-- Usuario logueado -->
+                <span class="badge bg-secondary">
+                    👤 {{ session['usuario_nombre'] }}
+                </span>
+
                 <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
                     <i class="fas fa-sign-out-alt"></i> Salir
                 </a>
@@ -74,14 +113,12 @@
 
                 <!-- 🌙 Tema -->
                 <button id="toggleTheme" class="btn btn-outline-dark btn-sm">
-                <i class="fas fa-adjust"></i>
-            </button>
+                    <i class="fas fa-adjust"></i>
+                </button>
 
             </nav>
         </div>
     </header>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <main class="container mt-4">
 
@@ -127,6 +164,9 @@
             }
         };
     </script>
+
+    <!-- ✅ Bloque para scripts específicos de cada página -->
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>

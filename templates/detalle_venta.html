@@ -1,0 +1,49 @@
+{% extends "base.html" %} {% block title %}Detalle de Venta{% endblock %} {% block content %}
+<div class="container mt-4">
+    <h2>📦 Detalle de Venta #{{ venta.id }}</h2>
+    <p class="text-muted">
+        Cliente: <strong>{{ venta.cliente }}</strong> | Fecha: {{ venta.fecha }} | Vendedor: {{ venta.vendedor if venta.vendedor else "N/A" }}
+    </p>
+
+    {% if detalle|length == 0 %}
+    <div class="alert alert-info text-center">
+        No hay productos registrados en esta venta
+    </div>
+    {% else %}
+    <div class="table-responsive shadow rounded">
+        <table class="table table-hover table-bordered align-middle text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in detalle %}
+                <tr>
+                    <td>{{ d.producto }}</td>
+                    <td>{{ d.cantidad }}</td>
+                    <td>${{ "{:,.2f}".format(d.precio) }}</td>
+                    <td>${{ "{:,.2f}".format(d.cantidad * d.precio) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ✅ Total acumulado -->
+    <div class="row mt-4">
+        <div class="col-md-6 offset-md-6">
+            <div class="card shadow text-center p-3">
+                <h6 class="text-muted">Total de la venta</h6>
+                <h4 class="fw-bold text-primary">${{ "{:,.2f}".format(venta.total) }}</h4>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('ventas') }}" class="btn btn-secondary mt-3">⬅ Volver al listado</a>
+</div>
+{% endblock %}

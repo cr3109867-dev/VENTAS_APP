@@ -1,16 +1,24 @@
 {% extends "base.html" %} {% block title %}Registrar producto{% endblock %} {% block content %}
 <div class="container">
-    <h2>Registrar nuevo producto</h2>
+    <h2>Registrar nuevo producto en {{ negocio_actual|capitalize }}</h2>
 
     <form method="POST" class="form-producto">
         <div class="form-group">
-            <label for="nombre">Nombre:</label>
-            <input type="text" id="nombre" name="nombre" placeholder="Ej: Arroz 1kg" required>
+            <label for="nombre">Nombre:</label> {% if negocio_actual == "farmacia" %}
+            <input type="text" id="nombre" name="nombre" placeholder="Ej: Paracetamol 500mg" required> {% elif negocio_actual == "ferreteria" %}
+            <input type="text" id="nombre" name="nombre" placeholder="Ej: Martillo" required> {% elif negocio_actual == "mercado" %}
+            <input type="text" id="nombre" name="nombre" placeholder="Ej: Arroz 1kg" required> {% elif negocio_actual == "tienda_de_ropa" %}
+            <input type="text" id="nombre" name="nombre" placeholder="Ej: Camiseta" required> {% else %}
+            <input type="text" id="nombre" name="nombre" placeholder="Ej: Producto genérico" required> {% endif %}
         </div>
 
         <div class="form-group">
-            <label for="categoria">Categoría:</label>
-            <input type="text" id="categoria" name="categoria" placeholder="Ej: Granos" required>
+            <label for="categoria">Categoría:</label> {% if negocio_actual == "farmacia" %}
+            <input type="text" id="categoria" name="categoria" placeholder="Ej: Analgésicos" required> {% elif negocio_actual == "ferreteria" %}
+            <input type="text" id="categoria" name="categoria" placeholder="Ej: Herramientas" required> {% elif negocio_actual == "mercado" %}
+            <input type="text" id="categoria" name="categoria" placeholder="Ej: Granos" required> {% elif negocio_actual == "tienda_de_ropa" %}
+            <input type="text" id="categoria" name="categoria" placeholder="Ej: Ropa" required> {% else %}
+            <input type="text" id="categoria" name="categoria" placeholder="Ej: Categoría genérica" required> {% endif %}
         </div>
 
         <div class="form-group">
@@ -26,6 +34,13 @@
         <div class="form-group">
             <label for="proveedor">Proveedor:</label>
             <input type="text" id="proveedor" name="proveedor" placeholder="Ej: Distribuidora La 14" required>
+        </div>
+
+        <!-- ✅ Nuevo campo para código de barras -->
+        <div class="form-group">
+            <label for="codigo_barras">Código de barras:</label>
+            <input type="text" id="codigo_barras" name="codigo_barras" placeholder="Escanee el producto aquí">
+            <small class="text-muted">Use la pistola lectora para llenar este campo automáticamente.</small>
         </div>
 
         <button type="submit" class="btn guardar">
