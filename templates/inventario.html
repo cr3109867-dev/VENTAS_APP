@@ -1,10 +1,9 @@
 {% extends "base.html" %} {% block title %}Inventario{% endblock %} {% block content %}
-
 <div class="container mt-4">
 
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>📦 Inventario de Productos</h2>
+        <h2>📦 Inventario de {{ negocio_actual|capitalize }}</h2>
 
         {% if session.get("rol") == "admin" %}
         <a href="{{ url_for('registrar_producto') }}" class="btn btn-success">
@@ -12,10 +11,17 @@
         </a> {% endif %}
     </div>
 
+    <!-- Campo de búsqueda por código de barras -->
+    <div class="mb-3">
+        <label for="buscar_codigo" class="form-label">Buscar por código de barras</label>
+        <input type="text" id="buscar_codigo" class="form-control" placeholder="Escanee el producto aquí">
+        <small class="text-muted">Use la pistola lectora para llenar este campo automáticamente.</small>
+    </div>
+
     <!-- ESTADO VACÍO -->
     {% if productos|length == 0 %}
     <div class="alert alert-info text-center">
-        No hay productos registrados
+        No hay productos registrados en {{ negocio_actual|capitalize }}
     </div>
     {% else %}
 
@@ -30,14 +36,14 @@
                     <th>💲 Precio</th>
                     <th>📊 Stock</th>
                     <th>🚚 Proveedor</th>
+                    <th>🔢 Código de barras</th>
                     <th>⚙️ Acciones</th>
                 </tr>
             </thead>
 
-            <tbody>
+            <tbody id="tabla_productos">
                 {% for producto in productos %}
                 <tr>
-
                     <!-- Nombre -->
                     <td class="fw-semibold">{{ producto.nombre }}</td>
 
@@ -52,27 +58,21 @@
                     <!-- Stock -->
                     <td>
                         {% if producto.cantidad == 0 %}
-                        <span class="badge bg-danger">
-                                ❌ Sin stock
-                            </span> {% elif producto.cantidad
-                        < 5 %} <span class="badge bg-warning text-dark">
-                            ⚠️ Bajo ({{ producto.cantidad }})
-                            </span>
-
+                        <span class="badge bg-danger">❌ Sin stock</span> {% elif producto.cantidad
+                        < 5 %} <span class="badge bg-warning text-dark">⚠️ Bajo ({{ producto.cantidad }})</span>
                             {% else %}
-                            <span class="badge bg-success">
-                                ✅ {{ producto.cantidad }}
-                            </span> {% endif %}
+                            <span class="badge bg-success">✅ {{ producto.cantidad }}</span> {% endif %}
                     </td>
 
                     <!-- Proveedor -->
                     <td>{{ producto.proveedor }}</td>
 
+                    <!-- Código de barras -->
+                    <td>{{ producto.codigo_barras }}</td>
+
                     <!-- Acciones -->
                     <td>
-
                         {% if session.get("rol") == "admin" %}
-
                         <!-- Editar -->
                         <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm">
                             ✏️
@@ -80,18 +80,11 @@
 
                         <!-- Eliminar -->
                         <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?')">
-
-                            <button type="submit" class="btn btn-outline-danger btn-sm">
-                                🗑️
-                            </button>
-
+                            <button type="submit" class="btn btn-outline-danger btn-sm">🗑️</button>
                         </form>
-
                         {% else %}
                         <span class="text-muted">🔒</span> {% endif %}
-
                     </td>
-
                 </tr>
                 {% endfor %}
             </tbody>
@@ -100,7 +93,22 @@
     </div>
 
     {% endif %}
-
 </div>
+{% endblock %} {% block scripts %}
+<script>
+    // Filtrar tabla en tiempo real según el código de barras escaneado
+    document.getElementById("buscar_codigo").addEventListener("input", function() {
+        const filtro = this.value.trim();
+        const filas = document.querySelectorAll("#tabla_productos tr");
 
+        filas.forEach(fila => {
+            const codigo = fila.querySelector("td:nth-child(6)").textContent.trim();
+            if (codigo.includes(filtro) || filtro === "") {
+                fila.style.display = "";
+            } else {
+                fila.style.display = "none";
+            }
+        });
+    });
+</script>
 {% endblock %}

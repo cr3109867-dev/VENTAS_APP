@@ -232,6 +232,27 @@ body.dark-mode select {
 }
 
 
+/* Labels más visibles en tema oscuro */
+
+body.dark-mode label {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+
+/* Botón específico Guardar producto */
+
+.guardar {
+    background: #28a745 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+.guardar:hover {
+    background: #218838 !important;
+}
+
+
 /* =========================
    Tema claro
    ========================= */
@@ -305,4 +326,80 @@ body.light-mode footer {
 body.dark-mode footer {
     background: #000000;
     color: #ecf0f1;
+}
+
+
+/* 🔔 Estilos generales para los mensajes flash */
+
+.alert {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+/* ✅ Éxito */
+
+.alert-success::before {
+    content: "✅";
+    font-size: 1.2rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-left: 6px solid #28a745;
+    color: #155724;
+}
+
+
+/* ⚠️ Advertencia */
+
+.alert-warning::before {
+    content: "⚠️";
+    font-size: 1.2rem;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-left: 6px solid #ffc107;
+    color: #856404;
+}
+
+
+/* ❌ Error */
+
+.alert-danger::before {
+    content: "❌";
+    font-size: 1.2rem;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-left: 6px solid #dc3545;
+    color: #721c24;
+}
+
+
+/* ℹ️ Información */
+
+.alert-info::before {
+    content: "ℹ️";
+    font-size: 1.2rem;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-left: 6px solid #17a2b8;
+    color: #0c5460;
+}
+
+
+/* Botón de cierre más visible */
+
+.alert .btn-close {
+    margin-left: auto;
+    filter: invert(0.5);
 }

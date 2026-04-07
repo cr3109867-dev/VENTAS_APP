@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Farmacia{% endblock %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">💊 Panel de Farmacia</h2>
+
+    <!-- KPIs -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Productos registrados</h6>
+                    <p class="fs-4 fw-bold">{{ total_productos }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Próximos a vencer</h6>
+                    <p class="fs-4 fw-bold text-danger">{{ proximos_vencer|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Stock total</h6>
+                    <p class="fs-4 fw-bold text-success">{{ stock_total }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de productos próximos a vencer -->
+    <h5 class="mt-4">📅 Productos próximos a vencer</h5>
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Nombre</th>
+                <th>Lote</th>
+                <th>Vencimiento</th>
+                <th>Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for med in proximos_vencer %}
+            <tr>
+                <td>{{ med.nombre }}</td>
+                <td>{{ med.lote }}</td>
+                <td>{{ med.vencimiento }}</td>
+                <td>{{ med.stock }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Gráfico -->
+    <div class="mt-4">
+        <canvas id="farmaciaChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctxFarm = document.getElementById('farmaciaChart').getContext('2d');
+    new Chart(ctxFarm, {
+        type: 'doughnut',
+        data: {
+            labels: {{ categorias|tojson }},
+            datasets: [{
+                data: {{ ventas_categoria|tojson }},
+                backgroundColor: ['#1abc9c','#3498db','#9b59b6','#f39c12','#e74c3c'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Distribución de ventas por categoría',
+                    font: { size: 18 }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 14 }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

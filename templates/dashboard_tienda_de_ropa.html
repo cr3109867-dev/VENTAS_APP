@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Dashboard  Tienda de ropa{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2>🏬 Dashboard Tienda_de_ropa</h2>
+
+    <!-- Gráfico de ventas por categoría -->
+    <h4 class="mt-4">Ventas por categoría</h4>
+    <canvas id="ventasCategoriaChart" height="100"></canvas>
+
+    <!-- Productos destacados -->
+    <h4 class="mt-4">Productos destacados</h4>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">👕 Ropa</h5>
+                    <p class="card-text">Últimas tendencias en moda.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">⚡ Electrodomésticos</h5>
+                    <p class="card-text">Ofertas en línea blanca y tecnología.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">🧸 Juguetes</h5>
+                    <p class="card-text">Diversión para todas las edades.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctxTienda_de_ropa= document.getElementById('ventasCategoriaChart').getContext('2d');
+    new Chart(ctxTienda_de_ropa, {
+        type: 'pie',
+        data: {
+            labels: {{ categorias|tojson }},
+            datasets: [{
+                label: 'Ventas por categoría',
+                data: {{ ventas_categoria|tojson }},
+                backgroundColor: [
+                    'rgba(0, 123, 255, 0.6)',
+                    'rgba(255, 193, 7, 0.6)',
+                    'rgba(220, 53, 69, 0.6)'
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

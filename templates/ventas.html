@@ -1,11 +1,9 @@
 {% extends "base.html" %} {% block title %}Ventas{% endblock %} {% block content %}
-
 <div class="container mt-4">
 
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>🧾 Ventas</h2>
-
         <a href="{{ url_for('registrar_venta') }}" class="btn btn-success">
             ➕ Nueva Venta
         </a>
@@ -23,77 +21,59 @@
 
     <!-- BUSCADOR -->
     <div class="mb-3">
-        <input type="text" id="buscador" class="form-control" placeholder="🔍 Buscar por cliente o producto...">
+        <input type="text" id="buscador" class="form-control" placeholder="🔍 Buscar por cliente...">
     </div>
 
     {% if ventas|length == 0 %}
-
     <!-- ESTADO VACÍO -->
     <div class="alert alert-info text-center">
         No hay ventas registradas
     </div>
-
     {% else %}
-
     <!-- TABLA -->
     <div class="table-responsive shadow rounded">
         <table class="table table-hover table-bordered align-middle text-center" id="tablaVentas">
-
             <thead class="table-dark">
                 <tr>
                     <th>#</th>
                     <th>📅 Fecha</th>
                     <th>👤 Cliente</th>
-                    <th>📦 Producto</th>
-                    <th>🔢 Cantidad</th>
-                    <th>💲 Precio</th>
-                    <th>💰 Total</th>
+                    <th>💰 Total Venta</th>
                     <th>🧑‍💼 Vendedor</th>
+                    <th>🔍 Detalle</th>
                 </tr>
             </thead>
-
             <tbody>
                 {% for v in ventas %}
                 <tr>
-
                     <td>{{ v.id }}</td>
-
-                    <!-- Fecha -->
                     <td>{{ v.fecha }}</td>
-
-                    <!-- Cliente -->
                     <td>{{ v.cliente }}</td>
-
-                    <!-- Producto -->
-                    <td class="fw-semibold">{{ v.nombre }}</td>
-
-                    <!-- Cantidad -->
-                    <td>{{ v.cantidad }}</td>
-
-                    <!-- Precio -->
-                    <td class="text-success fw-bold">
-                        ${{ "{:,.0f}".format(v.precio) }}
-                    </td>
-
-                    <!-- Total -->
                     <td class="fw-bold text-primary">
-                        ${{ "{:,.0f}".format(v.cantidad * v.precio) }}
+                        {% if v.total %} ${{ "{:,.0f}".format(v.total) }} {% else %} $0 {% endif %}
                     </td>
-
-                    <!-- Vendedor -->
+                    <td>{{ v.vendedor if v.vendedor else "N/A" }}</td>
                     <td>
-                        {{ v.vendedor if v.vendedor else "N/A" }}
+                        <a href="{{ url_for('detalle_venta', venta_id=v.id) }}" class="btn btn-info btn-sm">
+                            Ver detalle
+                        </a>
                     </td>
-
                 </tr>
                 {% endfor %}
             </tbody>
-
         </table>
     </div>
-
     {% endif %}
+</div>
 
+<!-- BOTONES DE EXPORTACIÓN -->
+<div class="mb-4">
+    <a href="{{ url_for('exportar_ventas_excel') }}" class="btn btn-outline-success">
+        📊 Exportar a Excel
+    </a>
+    <a href="{{ url_for('exportar_ventas_pdf') }}" class="btn btn-outline-danger">
+        📄 Exportar a PDF
+    </a>
 </div>
 
 <!-- SCRIPT PRO -->
@@ -102,12 +82,10 @@
     document.getElementById("buscador").addEventListener("keyup", function() {
         let filtro = this.value.toLowerCase();
         let filas = document.querySelectorAll("#tablaVentas tbody tr");
-
         filas.forEach(fila => {
             let texto = fila.innerText.toLowerCase();
             fila.style.display = texto.includes(filtro) ? "" : "none";
         });
     });
 </script>
-
 {% endblock %}

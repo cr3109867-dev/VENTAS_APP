@@ -1,0 +1,39 @@
+{% extends "base.html" %} {% block title %}Seleccionar negocio{% endblock %} {% block content %}
+<div class="container text-center mt-5">
+
+    <!-- Mostrar negocio actual -->
+    {% if negocio_actual %}
+    <h4 class="mb-4">Negocio actual:
+        <span class="badge bg-primary">{{ negocio_actual|capitalize }}</span>
+    </h4>
+    {% else %}
+    <h4 class="mb-4">Seleccione el tipo de negocio</h4>
+    {% endif %}
+
+    <form method="POST">
+        <div class="row mt-4">
+            <div class="col-md-3 mb-3">
+                <button type="submit" name="negocio" value="farmacia" class="btn btn-primary btn-lg w-100">
+                    💊 Farmacia
+                </button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button type="submit" name="negocio" value="ferreteria" class="btn btn-warning btn-lg w-100">
+                    🛠️ Ferretería
+                </button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button type="submit" name="negocio" value="mercado" class="btn btn-success btn-lg w-100">
+                    🛒 Mercado
+                </button>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button type="submit" name="negocio" value="tienda_de_ropa" class="btn btn-info btn-lg w-100">
+        🏬 Tienda de Ropa
+    </button>
+            </div>
+
+        </div>
+    </form>
+</div>
+{% endblock %}
