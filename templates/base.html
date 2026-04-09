@@ -5,16 +5,22 @@
     <meta charset="UTF-8">
     <title>{% block title %}Ventas App{% endblock %}</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- ✅ Bootstrap primero -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <!-- ✅ Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 🎨 Tu CSS al final (sobrescribe Bootstrap) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
+<body class="app-theme">
 
-    <header class="p-3 bg-light border-bottom shadow-sm">
+    <!-- =========================
+         Navbar elegante
+    ========================== -->
+    <header>
         <div class="container d-flex flex-wrap align-items-center justify-content-between">
 
             <!-- 🔵 Título -->
@@ -72,25 +78,19 @@
                     <i class="fas fa-chart-line"></i> Reporte
                 </a>
 
-                <!-- 🔐 ADMIN -->
                 {% if session.get("rol") == "admin" %}
                 <a href="{{ url_for('usuarios') }}" class="btn btn-dark btn-sm">
                     <i class="fas fa-users"></i> Usuarios
                 </a>
-                {% endif %}
-
-                <!-- Mostrar negocio elegido -->
-                {% if session.get("negocio") %}
+                {% endif %} {% if session.get("negocio") %}
                 <span class="badge bg-primary">
                     Negocio: {{ session['negocio']|replace('_',' ')|capitalize }}
                 </span>
-                <!-- Botón para cambiar negocio -->
                 <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-warning btn-sm">
                     <i class="fas fa-sync-alt"></i> Cambiar negocio
                 </a>
                 {% endif %}
 
-                <!-- Usuario logueado -->
                 <span class="badge bg-secondary">
                     👤 {{ session['usuario_nombre'] }}
                 </span>
@@ -100,29 +100,21 @@
                 </a>
 
                 {% else %}
-
                 <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-sign-in-alt"></i> Login
                 </a>
-
                 <a href="{{ url_for('register') }}" class="btn btn-outline-success btn-sm">
                     <i class="fas fa-user-plus"></i> Registro
                 </a>
-
                 {% endif %}
-
-                <!-- 🌙 Tema -->
-                <button id="toggleTheme" class="btn btn-outline-dark btn-sm">
-                    <i class="fas fa-adjust"></i>
-                </button>
-
             </nav>
         </div>
     </header>
 
+    <!-- =========================
+         Contenido principal
+    ========================== -->
     <main class="container mt-4">
-
-        <!-- ✅ FLASH -->
         {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
             {{ message }}
@@ -131,41 +123,16 @@
         {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-center mt-5 p-3 border-top">
+    <!-- =========================
+         Footer elegante
+    ========================== -->
+    <footer>
         <p>© 2026 Ventas App - Desarrollado por Cristian</p>
     </footer>
 
     <!-- ✅ Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- 🌙 Tema -->
-    <script>
-        const toggleBtn = document.getElementById("toggleTheme");
-
-        toggleBtn.addEventListener("click", () => {
-            if (document.body.classList.contains("dark-mode")) {
-                document.body.classList.remove("dark-mode");
-                document.body.classList.add("light-mode");
-                localStorage.setItem("theme", "light");
-            } else {
-                document.body.classList.remove("light-mode");
-                document.body.classList.add("dark-mode");
-                localStorage.setItem("theme", "dark");
-            }
-        });
-
-        // Cargar preferencia al abrir la página
-        window.onload = () => {
-            const theme = localStorage.getItem("theme");
-            if (theme === "dark") {
-                document.body.classList.add("dark-mode");
-            } else {
-                document.body.classList.add("light-mode");
-            }
-        };
-    </script>
-
-    <!-- ✅ Bloque para scripts específicos de cada página -->
     {% block scripts %}{% endblock %}
 </body>
 

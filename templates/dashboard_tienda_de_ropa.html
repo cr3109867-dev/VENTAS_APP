@@ -1,37 +1,42 @@
 {% extends "base.html" %}
-{% block title %}Dashboard  Tienda de ropa{% endblock %}
+{% block title %}Dashboard Tienda de Ropa{% endblock %}
 {% block content %}
-<div class="container mt-4">
-    <h2>🏬 Dashboard Tienda_de_ropa</h2>
+<div class="container dashboard-ropa">
+    <!-- Encabezado -->
+    <h2 class="mb-4 text-primary border-bottom pb-2 text-center">
+        <i class="fas fa-tshirt"></i> Panel Tienda de Ropa
+    </h2>
 
     <!-- Gráfico de ventas por categoría -->
-    <h4 class="mt-4">Ventas por categoría</h4>
-    <canvas id="ventasCategoriaChart" height="100"></canvas>
+    <h4 class="mt-4 text-primary"><i class="fas fa-chart-pie"></i> Ventas por categoría</h4>
+    <div class="chart-container shadow-sm p-3">
+        <canvas id="ventasCategoriaChart" height="100"></canvas>
+    </div>
 
     <!-- Productos destacados -->
-    <h4 class="mt-4">Productos destacados</h4>
+    <h4 class="mt-4 text-primary"><i class="fas fa-star"></i> Productos destacados</h4>
     <div class="row">
         <div class="col-md-4">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">👕 Ropa</h5>
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary fw-bold">👕 Ropa</h5>
                     <p class="card-text">Últimas tendencias en moda.</p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">⚡ Electrodomésticos</h5>
-                    <p class="card-text">Ofertas en línea blanca y tecnología.</p>
+                <div class="card-body text-center">
+                    <h5 class="card-title text-info fw-bold">👟 Calzado</h5>
+                    <p class="card-text">Colección primavera-verano.</p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">🧸 Juguetes</h5>
-                    <p class="card-text">Diversión para todas las edades.</p>
+                <div class="card-body text-center">
+                    <h5 class="card-title text-danger fw-bold">👜 Accesorios</h5>
+                    <p class="card-text">Complementos para tu estilo.</p>
                 </div>
             </div>
         </div>
@@ -40,10 +45,16 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctxTienda_de_ropa= document.getElementById('ventasCategoriaChart').getContext('2d');
-    new Chart(ctxTienda_de_ropa, {
+document.addEventListener("DOMContentLoaded", function() {
+    const isDark = document.body.classList.contains("dark-mode");
+    const chartColors = {
+        text: isDark ? "#f1f1f1" : "#212529",
+        grid: isDark ? "#444" : "#dee2e6"
+    };
+
+    const ctxRopa = document.getElementById('ventasCategoriaChart').getContext('2d');
+    new Chart(ctxRopa, {
         type: 'pie',
         data: {
             labels: {{ categorias|tojson }},
@@ -51,9 +62,9 @@
                 label: 'Ventas por categoría',
                 data: {{ ventas_categoria|tojson }},
                 backgroundColor: [
-                    'rgba(0, 123, 255, 0.6)',
-                    'rgba(255, 193, 7, 0.6)',
-                    'rgba(220, 53, 69, 0.6)'
+                    'rgba(0, 123, 255, 0.6)',   // Azul
+                    'rgba(255, 99, 132, 0.6)', // Rosa
+                    'rgba(255, 193, 7, 0.6)'   // Amarillo
                 ],
                 borderColor: '#fff',
                 borderWidth: 2
@@ -62,9 +73,19 @@
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'bottom' }
+                title: {
+                    display: true,
+                    text: 'Distribución de ventas por categoría',
+                    font: { size: 18, weight: 'bold' },
+                    color: chartColors.text
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: { color: chartColors.text }
+                }
             }
         }
     });
+});
 </script>
 {% endblock %}
