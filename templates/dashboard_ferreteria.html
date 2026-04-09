@@ -1,41 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Dashboard Ferretería{% endblock %}
 {% block content %}
-<div class="container">
-    <h2 class="mb-4">🛠️ Panel de Ferretería</h2>
+<div class="container dashboard-ferreteria">
+    <!-- Encabezado -->
+    <h2 class="mb-4 text-warning border-bottom pb-2 text-center">
+        <i class="fas fa-tools"></i> Panel de Ferretería
+    </h2>
 
     <!-- KPIs -->
     <div class="row mb-4">
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h6 class="card-title">Materiales registrados</h6>
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-secondary fw-bold">Materiales registrados</h6>
                     <p class="fs-4 fw-bold">{{ materiales|length }}</p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h6 class="card-title">Productos con bajo stock</h6>
-                    <p class="fs-4 fw-bold text-danger">{{ bajo_stock|length }}</p>
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-danger fw-bold">Productos con bajo stock</h6>
+                    <p class="fs-4 fw-bold">{{ bajo_stock|length }}</p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h6 class="card-title">Stock total</h6>
-                    <p class="fs-4 fw-bold text-success">{{ stock_total }}</p>
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-warning fw-bold">Stock total</h6>
+                    <p class="fs-4 fw-bold">{{ stock_total }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tabla de materiales -->
-    <h5 class="mt-4">📋 Inventario de materiales</h5>
+    <!-- Tabla -->
+    <h5 class="mt-4 text-warning">
+        <i class="fas fa-clipboard-list"></i> Inventario de materiales
+    </h5>
     <table class="table table-striped table-hover shadow-sm">
-        <thead class="table-light">
+        <thead class="table-secondary">
             <tr>
                 <th>Nombre</th>
                 <th>Unidad</th>
@@ -56,47 +61,49 @@
     </table>
 
     <!-- Gráfico -->
-    <div class="mt-4">
+    <div class="chart-container mt-4">
         <canvas id="ferreteriaChart"></canvas>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    const isDark = document.body.classList.contains("dark-mode");
+    const chartColors = {
+        text: isDark ? "#f1f1f1" : "#212529",
+        grid: isDark ? "#444" : "#dee2e6"
+    };
+
     const ctxFer = document.getElementById('ferreteriaChart').getContext('2d');
     new Chart(ctxFer, {
-        type: 'line',
+        type: 'bar',
         data: {
-            labels: { meses|tojson },
+            labels: {{ meses|tojson }},
             datasets: [{
                 label: 'Ventas mensuales',
                 data: {{ ventas|tojson }},
-                borderColor: '#e67e22',
-                backgroundColor: 'rgba(230,126,34,0.2)',
-                fill: true,
-                tension: 0.3
+                backgroundColor: '#fd7e14'
             }]
         },
         options: {
+            indexAxis: 'y',
             responsive: true,
             plugins: {
                 title: {
                     display: true,
-                    text: 'Tendencia de ventas de ferretería',
-                    font: { size: 18 }
+                    text: 'Ventas de materiales por mes',
+                    font: { size: 18, weight: 'bold' },
+                    color: chartColors.text
                 },
                 legend: {
-                    display: false
+                    labels: { color: chartColors.text }
                 }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 50 }
-                }
+                x: { ticks: { color: chartColors.text }, grid: { color: chartColors.grid }, beginAtZero: true },
+                y: { ticks: { color: chartColors.text }, grid: { color: chartColors.grid } }
             }
         }
     });

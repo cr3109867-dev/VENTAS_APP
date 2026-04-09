@@ -1,40 +1,35 @@
-/* Estilos generales */
+/* =========================
+   Estilos generales
+========================= */
 
-body {
+body.app-theme {
+    background-color: #121212;
+    color: #f1f1f1;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background: #f4f6f9;
-    color: #333;
 }
 
 
-/* Encabezado */
+/* =========================
+   Navbar & Footer elegantes
+========================= */
 
 header {
-    background: #2c3e50;
-    color: #ecf0f1;
+    background-color: #1e1e1e;
+    color: #f1f1f1;
     padding: 15px;
     text-align: center;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 1.8rem;
-}
-
-
-/* Barra de navegación */
-
-nav {
-    margin-top: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 nav a {
-    color: #ecf0f1;
     margin: 0 12px;
     text-decoration: none;
     font-weight: bold;
+    color: #ecf0f1;
     transition: color 0.3s ease;
 }
 
@@ -42,364 +37,292 @@ nav a:hover {
     color: #1abc9c;
 }
 
+footer {
+    background-color: #1e1e1e;
+    color: #f1f1f1;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 12px;
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4);
+}
 
-/* Contenedor principal */
+
+/* =========================
+   Contenedor
+========================= */
 
 .container {
     width: 90%;
     margin: 20px auto;
-    background: #fff;
     padding: 25px;
     border-radius: 10px;
-    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.1);
+    background-color: #1e1e1e;
+    color: #f1f1f1;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 
-/* Tablas */
+/* =========================
+   Tablas
+========================= */
 
 table {
-    width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    width: 100%;
+    margin-bottom: 1.5rem;
     font-size: 0.95rem;
+    color: #f1f1f1;
+}
+
+thead {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: #343a40;
+    color: #f1f1f1;
+}
+
+tbody tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 table th,
 table td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: center;
-}
-
-table th {
-    background: #34495e;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-table tr:nth-child(even) {
-    background: #f9f9f9;
-}
-
-table tr:hover {
-    background: #ecf0f1;
+    padding: 0.75rem;
+    border: 1px solid #444;
 }
 
 
-/* Botones */
+/* =========================
+   Botones
+========================= */
 
 button,
 .btn {
-    background: #1abc9c;
-    color: #fff;
-    border: none;
-    padding: 10px 15px;
     border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
     cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s ease, transform 0.2s ease;
-    text-decoration: none;
-    display: inline-block;
 }
 
-button:hover,
-.btn:hover {
-    background: #16a085;
-    transform: scale(1.05);
+.btn:hover,
+.btn:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+.btn-info {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+    color: #212529;
 }
 
 
-/* Botón eliminar */
+/* =========================
+   Inputs y Placeholders
+========================= */
 
-.cancelar {
-    background: #e74c3c;
-}
-
-.cancelar:hover {
-    background: #c0392b;
-}
-
-
-/* Formularios */
-
-form {
-    margin: 20px 0;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-    color: #2c3e50;
+::placeholder {
+    color: #f1f1f1;
+    opacity: 0.8;
 }
 
 input,
-select {
-    padding: 10px;
-    margin: 5px 0;
-    width: 100%;
-    border: 1px solid #ccc;
+select,
+textarea {
     border-radius: 6px;
-    transition: border-color 0.3s ease;
+    border: 1px solid #444;
+    background-color: #1e1e1e;
+    color: #f1f1f1;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease-in-out;
 }
 
 input:focus,
-select:focus {
-    border-color: #1abc9c;
+select:focus,
+textarea:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
     outline: none;
 }
 
 
-/* Alerta de stock bajo */
+/* =========================
+   Cards
+========================= */
 
-.bajo-stock {
-    color: #e74c3c;
-    font-weight: bold;
+.card {
+    background-color: #1e1e1e;
+    color: #f1f1f1;
+    border: 1px solid #444;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-
-/* Encabezados */
-
-h1,
-h2 {
-    color: #2c3e50;
-    text-align: center;
-    margin-bottom: 15px;
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
+.card-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
 
-/* Footer */
-
-footer {
-    background: #2c3e50;
-    color: #ecf0f1;
-    text-align: center;
-    padding: 10px;
-    margin-top: 30px;
-    font-size: 0.85rem;
+.card-text {
+    font-size: 0.95rem;
 }
 
 
 /* =========================
-   Tema oscuro
-   ========================= */
-
-body.dark-mode {
-    background: #1e272e;
-    color: #ecf0f1;
-}
-
-body.dark-mode header,
-body.dark-mode nav,
-body.dark-mode footer {
-    background: #000000;
-    color: #ecf0f1;
-}
-
-body.dark-mode nav a {
-    color: #ecf0f1;
-}
-
-body.dark-mode nav a:hover {
-    color: #1abc9c;
-}
-
-body.dark-mode .container {
-    background: #2f3640;
-    color: #ecf0f1;
-}
-
-body.dark-mode table th {
-    background: #000000;
-    color: #ecf0f1;
-}
-
-body.dark-mode table td {
-    background: #353b48;
-    color: #ecf0f1;
-}
-
-body.dark-mode input,
-body.dark-mode select {
-    background: #353b48;
-    color: #ecf0f1;
-    border: 1px solid #555;
-}
-
-
-/* Labels más visibles en tema oscuro */
-
-body.dark-mode label {
-    color: #ffffff;
-    font-weight: bold;
-}
-
-
-/* Botón específico Guardar producto */
-
-.guardar {
-    background: #28a745 !important;
-    color: #ffffff !important;
-    font-weight: bold;
-}
-
-.guardar:hover {
-    background: #218838 !important;
-}
-
-
-/* =========================
-   Tema claro
-   ========================= */
-
-body.light-mode {
-    background: #f4f6f9;
-    color: #333;
-}
-
-body.light-mode header,
-body.light-mode nav,
-body.light-mode footer {
-    background: #ffffff;
-    color: #2c3e50;
-    border-bottom: 1px solid #ddd;
-}
-
-body.light-mode nav a {
-    color: #2c3e50;
-}
-
-body.light-mode nav a:hover {
-    color: #1abc9c;
-}
-
-body.light-mode .container {
-    background: #ffffff;
-    color: #333;
-}
-
-body.light-mode table th {
-    background: #2c3e50;
-    color: #fff;
-}
-
-body.light-mode table td {
-    background: #f9f9f9;
-    color: #333;
-}
-
-body.light-mode input,
-body.light-mode select {
-    background: #ffffff;
-    color: #333;
-    border: 1px solid #ccc;
-}
-
-
-/* Footer fijo al fondo */
-
-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-}
-
-
-/* Footer en tema claro */
-
-body.light-mode footer {
-    background: #3498db;
-    /* azul bonito */
-    color: #fff;
-    border-top: 1px solid #ddd;
-}
-
-
-/* Footer en tema oscuro */
-
-body.dark-mode footer {
-    background: #000000;
-    color: #ecf0f1;
-}
-
-
-/* 🔔 Estilos generales para los mensajes flash */
+   Alerts elegantes
+========================= */
 
 .alert {
     border-radius: 8px;
     font-weight: 500;
-    padding: 12px 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease-in-out;
 }
 
+.alert .btn-close {
+    filter: brightness(0.7);
+}
 
-/* ✅ Éxito */
-
-.alert-success::before {
-    content: "✅";
-    font-size: 1.2rem;
+.alert:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .alert-success {
-    background-color: #d4edda;
+    background-color: #1e3d2b;
+    color: #c3e6cb;
     border-left: 6px solid #28a745;
-    color: #155724;
-}
-
-
-/* ⚠️ Advertencia */
-
-.alert-warning::before {
-    content: "⚠️";
-    font-size: 1.2rem;
-}
-
-.alert-warning {
-    background-color: #fff3cd;
-    border-left: 6px solid #ffc107;
-    color: #856404;
-}
-
-
-/* ❌ Error */
-
-.alert-danger::before {
-    content: "❌";
-    font-size: 1.2rem;
 }
 
 .alert-danger {
-    background-color: #f8d7da;
+    background-color: #3d1e22;
+    color: #f5c6cb;
     border-left: 6px solid #dc3545;
-    color: #721c24;
 }
 
-
-/* ℹ️ Información */
-
-.alert-info::before {
-    content: "ℹ️";
-    font-size: 1.2rem;
+.alert-warning {
+    background-color: #3d351e;
+    color: #ffeeba;
+    border-left: 6px solid #ffc107;
 }
 
 .alert-info {
-    background-color: #d1ecf1;
-    border-left: 6px solid #17a2b8;
-    color: #0c5460;
+    background-color: #1e3d3d;
+    color: #bee5eb;
+    border-left: 6px solid #0dcaf0;
 }
 
 
-/* Botón de cierre más visible */
+/* =========================
+   Títulos y encabezados
+========================= */
 
-.alert .btn-close {
-    margin-left: auto;
-    filter: invert(0.5);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    color: #e0e0e0;
+}
+
+h1 {
+    font-size: 2rem;
+    border-bottom: 2px solid #0d6efd;
+    padding-bottom: 0.5rem;
+    text-align: center;
+}
+
+h2 {
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+
+/* =========================
+   Chart.js contenedor
+========================= */
+
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 400px;
+    width: 80%;
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+
+/* Ajustes de colores para tema oscuro fijo */
+
+.text-primary {
+    color: #4da3ff !important;
+    /* Azul claro que sí se ve en fondo oscuro */
+}
+
+.text-info {
+    color: #17a2b8 !important;
+    /* Azul turquesa */
+}
+
+.text-light {
+    color: #f1f1f1 !important;
+    /* Gris claro */
+}
+
+.text-muted {
+    color: #b0b0b0 !important;
+    /* Gris tenue */
+}
+
+.text-success {
+    color: #28a745 !important;
+    /* Verde brillante */
+}
+
+.text-danger {
+    color: #dc3545 !important;
+    /* Rojo brillante */
+}
+
+.text-warning {
+    color: #ffc107 !important;
+    /* Amarillo fuerte */
 }

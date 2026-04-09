@@ -1,31 +1,29 @@
 {% extends "base.html" %} {% block title %}Registrar venta{% endblock %} {% block content %}
 <div class="container mt-4">
-
-    <div class="mb-4">
-        <h2>💰 Registrar Venta</h2>
+    <!-- Encabezado -->
+    <div class="mb-4 text-center">
+        <h2 class="border-bottom pb-2">💰 Registrar Venta</h2>
         <p class="text-muted">Escanee productos con la pistola o selecciónelos manualmente</p>
     </div>
 
-    <div class="card shadow p-4">
-
-        <!-- Formulario de escaneo / selección -->
+    <!-- Formulario -->
+    <div class="card shadow-sm p-4 rounded">
         <form id="formVenta" method="POST" onsubmit="return confirmarVenta()">
-
-            <!-- Escaneo con pistola -->
+            <!-- Código de barras -->
             <div class="mb-3">
-                <label class="form-label">Código de barras</label>
+                <label class="form-label fw-semibold">Código de barras</label>
                 <input type="text" id="codigo_barras" name="codigo_barras" class="form-control" placeholder="Escanee el producto aquí">
                 <small class="text-muted">Cada escaneo agrega el producto al carrito con cantidad = 1</small>
             </div>
 
             <hr>
 
-            <!-- PRODUCTO manual -->
+            <!-- Producto -->
             <div class="mb-3">
-                <label class="form-label">Producto</label>
+                <label class="form-label fw-semibold">Producto</label>
                 <select id="producto_id" name="producto_id" class="form-select" onchange="actualizarStock()">
                     {% for producto in productos %}
-                    <option value="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-precio="{{ producto.precio }}" data-stock="{{ producto.cantidad }}">
+                    <option value="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-precio="{{ producto.precio }}" data-stock="{{ producto.cantidad }}" data-codigo="{{ producto.codigo_barras }}">
                         {{ producto.nombre }} (Stock: {{ producto.cantidad }})
                     </option>
                     {% endfor %}
@@ -33,58 +31,52 @@
                 <small id="stockInfo" class="text-muted"></small>
             </div>
 
-            <!-- CANTIDAD -->
+            <!-- Cantidad -->
             <div class="mb-3">
-                <label class="form-label">Cantidad</label>
+                <label class="form-label fw-semibold">Cantidad</label>
                 <input type="number" id="cantidad" name="cantidad" class="form-control" min="1" value="1">
-                <div id="errorStock" class="text-danger mt-1" style="display:none;">
-                    ❌ No hay suficiente stock
-                </div>
+                <div id="errorStock" class="alert alert-danger mt-2 py-1 px-2" style="display:none;">❌ No hay suficiente stock</div>
             </div>
 
-            <!-- BOTÓN para agregar al carrito -->
-            <button type="button" class="btn btn-primary w-100 mb-3" onclick="agregarAlCarrito()">
-                ➕ Agregar al carrito
-            </button>
+            <!-- Botón agregar -->
+            <button type="button" class="btn btn-primary w-100 mb-3 fw-bold shadow-sm" onclick="agregarAlCarrito()">➕ Agregar al carrito</button>
 
-            <!-- CLIENTE -->
+            <!-- Cliente -->
             <div class="mb-3">
-                <label class="form-label">Cliente</label>
+                <label class="form-label fw-semibold">Cliente</label>
                 <input type="text" id="cliente" name="cliente" class="form-control" placeholder="Ej: Juan Pérez" required>
             </div>
 
             <!-- Carrito -->
-            <h4 class="mt-4">🛒 Carrito de venta</h4>
-            <table class="table table-striped" id="tablaCarrito">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th>Total</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-
-            <!-- ✅ Total acumulado -->
-            <div class="mt-3 text-end">
-                <h5>Total acumulado: <span id="totalVenta">$0.00</span></h5>
+            <h4 class="mt-4 border-bottom pb-2">🛒 Carrito de venta</h4>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle text-center mb-0" id="tablaCarrito">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Total</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
 
-            <!-- Campo oculto para enviar carrito en JSON -->
+            <!-- Total -->
+            <div class="mt-3 text-end">
+                <h5>Total acumulado: <span id="totalVenta" class="fw-bold text-success">$0.00</span></h5>
+            </div>
+
             <input type="hidden" id="carritoInput" name="carrito">
 
-            <!-- BOTÓN para confirmar venta -->
-            <button type="submit" class="btn btn-success w-100 mt-3">
-                💾 Confirmar Venta
-            </button>
+            <!-- Botón confirmar -->
+            <button type="submit" class="btn btn-success w-100 mt-3 fw-bold shadow-sm">💾 Confirmar Venta</button>
         </form>
     </div>
 </div>
-
-<!-- SCRIPT PRO -->
+{% endblock %} {% block scripts %}
 <script>
     let carrito = [];
 
@@ -105,11 +97,12 @@
         const cantidad = parseInt(document.getElementById("cantidad").value);
 
         if (cantidad > stock) {
-            alert("❌ Stock insuficiente");
+            document.getElementById("errorStock").style.display = "block";
             return;
+        } else {
+            document.getElementById("errorStock").style.display = "none";
         }
 
-        // Buscar si ya está en el carrito
         const existente = carrito.find(item => item.id === productoId);
         if (existente) {
             existente.cantidad += cantidad;
@@ -128,7 +121,6 @@
     function renderCarrito() {
         const tbody = document.querySelector("#tablaCarrito tbody");
         tbody.innerHTML = "";
-
         let totalVenta = 0;
 
         carrito.forEach((item, index) => {
@@ -140,16 +132,13 @@
                     <td>${item.cantidad}</td>
                     <td>$${item.precio.toFixed(2)}</td>
                     <td>$${total.toFixed(2)}</td>
-                    <td><button type="button" class="btn btn-danger btn-sm" onclick="eliminarDelCarrito(${index})">🗑️</button></td>
+                    <td><button type="button" class="btn btn-outline-danger btn-sm shadow-sm" onclick="eliminarDelCarrito(${index})">🗑️</button></td>
                 </tr>
             `;
             tbody.innerHTML += fila;
         });
 
-        // ✅ Mostrar total acumulado
         document.getElementById("totalVenta").innerText = "$" + totalVenta.toFixed(2);
-
-        // ✅ Actualizar campo oculto con carrito en JSON
         document.getElementById("carritoInput").value = JSON.stringify(carrito);
     }
 
@@ -163,12 +152,35 @@
             alert("❌ El carrito está vacío");
             return false;
         }
-        // Actualizar campo oculto antes de enviar
         document.getElementById("carritoInput").value = JSON.stringify(carrito);
         return confirm("¿Confirmar esta venta con " + carrito.length + " productos?");
     }
 
-    // inicializar
+    // ✅ Mejora: escaneo automático
+    document.getElementById("codigo_barras").addEventListener("input", function() {
+        const codigo = this.value.trim();
+        if (codigo !== "") {
+            const select = document.getElementById("producto_id");
+            let encontrado = false;
+
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].dataset.codigo === codigo) {
+                    select.selectedIndex = i;
+                    actualizarStock();
+                    agregarAlCarrito();
+                    encontrado = true;
+                    break;
+                }
+            }
+
+            if (!encontrado) {
+                alert("❌ Producto no encontrado con código: " + codigo);
+            }
+
+            this.value = ""; // limpiar para el siguiente escaneo
+        }
+    });
+
     window.onload = actualizarStock;
 </script>
 {% endblock %}

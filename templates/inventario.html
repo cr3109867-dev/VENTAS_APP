@@ -1,35 +1,31 @@
 {% extends "base.html" %} {% block title %}Inventario{% endblock %} {% block content %}
 <div class="container mt-4">
-
-    <!-- HEADER -->
+    <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>📦 Inventario de {{ negocio_actual|capitalize }}</h2>
-
+        <h2 class="border-bottom pb-2 text-center w-100">
+            📦 Inventario de {{ negocio_actual|capitalize }}
+        </h2>
         {% if session.get("rol") == "admin" %}
-        <a href="{{ url_for('registrar_producto') }}" class="btn btn-success">
-            ➕ Nuevo Producto
-        </a> {% endif %}
+        <a href="{{ url_for('registrar_producto') }}" class="btn btn-success fw-bold shadow-sm">➕ Nuevo Producto</a> {% endif %}
     </div>
 
-    <!-- Campo de búsqueda por código de barras -->
+    <!-- Buscador -->
     <div class="mb-3">
-        <label for="buscar_codigo" class="form-label">Buscar por código de barras</label>
+        <label for="buscar_codigo" class="form-label fw-semibold">Buscar por código de barras</label>
         <input type="text" id="buscar_codigo" class="form-control" placeholder="Escanee el producto aquí">
         <small class="text-muted">Use la pistola lectora para llenar este campo automáticamente.</small>
     </div>
 
-    <!-- ESTADO VACÍO -->
+    <!-- Alert si no hay productos -->
     {% if productos|length == 0 %}
-    <div class="alert alert-info text-center">
+    <div class="alert alert-info text-center shadow-sm">
         No hay productos registrados en {{ negocio_actual|capitalize }}
     </div>
     {% else %}
-
-    <!-- TABLA -->
+    <!-- Tabla -->
     <div class="table-responsive shadow rounded">
         <table class="table table-hover table-bordered align-middle text-center mb-0">
-
-            <thead class="table-dark">
+            <thead>
                 <tr>
                     <th>📦 Nombre</th>
                     <th>🏷️ Categoría</th>
@@ -40,47 +36,26 @@
                     <th>⚙️ Acciones</th>
                 </tr>
             </thead>
-
             <tbody id="tabla_productos">
                 {% for producto in productos %}
                 <tr>
-                    <!-- Nombre -->
                     <td class="fw-semibold">{{ producto.nombre }}</td>
-
-                    <!-- Categoría -->
                     <td>{{ producto.categoria }}</td>
-
-                    <!-- Precio -->
-                    <td class="fw-bold text-success">
-                        ${{ "{:,.0f}".format(producto.precio) }}
-                    </td>
-
-                    <!-- Stock -->
+                    <td class="fw-bold text-success">${{ "{:,.0f}".format(producto.precio) }}</td>
                     <td>
                         {% if producto.cantidad == 0 %}
-                        <span class="badge bg-danger">❌ Sin stock</span> {% elif producto.cantidad
-                        < 5 %} <span class="badge bg-warning text-dark">⚠️ Bajo ({{ producto.cantidad }})</span>
+                        <span class="badge bg-danger shadow-sm">❌ Sin stock</span> {% elif producto.cantidad
+                        < 5 %} <span class="badge bg-warning text-dark shadow-sm">⚠️ Bajo ({{ producto.cantidad }})</span>
                             {% else %}
-                            <span class="badge bg-success">✅ {{ producto.cantidad }}</span> {% endif %}
+                            <span class="badge bg-success shadow-sm">✅ {{ producto.cantidad }}</span> {% endif %}
                     </td>
-
-                    <!-- Proveedor -->
                     <td>{{ producto.proveedor }}</td>
-
-                    <!-- Código de barras -->
                     <td>{{ producto.codigo_barras }}</td>
-
-                    <!-- Acciones -->
                     <td>
                         {% if session.get("rol") == "admin" %}
-                        <!-- Editar -->
-                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm">
-                            ✏️
-                        </a>
-
-                        <!-- Eliminar -->
+                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm shadow-sm">✏️</a>
                         <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?')">
-                            <button type="submit" class="btn btn-outline-danger btn-sm">🗑️</button>
+                            <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm">🗑️</button>
                         </form>
                         {% else %}
                         <span class="text-muted">🔒</span> {% endif %}
@@ -88,26 +63,18 @@
                 </tr>
                 {% endfor %}
             </tbody>
-
         </table>
     </div>
-
     {% endif %}
 </div>
 {% endblock %} {% block scripts %}
 <script>
-    // Filtrar tabla en tiempo real según el código de barras escaneado
     document.getElementById("buscar_codigo").addEventListener("input", function() {
-        const filtro = this.value.trim();
+        const filtro = this.value.trim().toLowerCase();
         const filas = document.querySelectorAll("#tabla_productos tr");
-
         filas.forEach(fila => {
-            const codigo = fila.querySelector("td:nth-child(6)").textContent.trim();
-            if (codigo.includes(filtro) || filtro === "") {
-                fila.style.display = "";
-            } else {
-                fila.style.display = "none";
-            }
+            const codigo = fila.querySelector("td:nth-child(6)").textContent.trim().toLowerCase();
+            fila.style.display = (codigo.includes(filtro) || filtro === "") ? "" : "none";
         });
     });
 </script>
