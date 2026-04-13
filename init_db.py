@@ -1,10 +1,13 @@
 import sqlite3
+from werkzeug.security import generate_password_hash
 
 def init_db():
     conn = sqlite3.connect("ventas_app.db")
     cursor = conn.cursor()
 
+    # ---------------------------
     # Crear tablas
+    # ---------------------------
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,25 +32,15 @@ def init_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS productos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
+        nombre TEXT NOT NULL,
         categoria TEXT,
-        precio REAL,
-        cantidad INTEGER,
+        precio REAL NOT NULL,
+        cantidad INTEGER NOT NULL,
         proveedor TEXT,
         negocio TEXT,
-        codigo_barras TEXT
-    );
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS detalle_ventas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        venta_id INTEGER NOT NULL,
-        producto_id INTEGER NOT NULL,
-        cantidad INTEGER NOT NULL,
-        precio REAL NOT NULL,
-        FOREIGN KEY(venta_id) REFERENCES ventas(id),
-        FOREIGN KEY(producto_id) REFERENCES productos(id)
+        codigo_barras TEXT,
+        fecha_vencimiento DATE,
+        qr_path TEXT
     );
     """)
 
@@ -62,15 +55,35 @@ def init_db():
     );
     """)
 
-    # Datos de prueba
     cursor.execute("""
-    INSERT OR IGNORE INTO usuarios (id, nombre, correo, contraseña, rol)
-    VALUES (1, 'Admin', 'admin@test.com', '1234', 'admin');
+    CREATE TABLE IF NOT EXISTS detalle_ventas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        venta_id INTEGER NOT NULL,
+        producto_id INTEGER NOT NULL,
+        cantidad INTEGER NOT NULL,
+        precio REAL NOT NULL,
+        FOREIGN KEY (venta_id) REFERENCES ventas(id),
+        FOREIGN KEY (producto_id) REFERENCES productos(id)
+    );
     """)
 
+    # ---------------------------
+    # Datos de prueba garantizados
+    # ---------------------------
+    # Admin por defecto con contraseña encriptada
+    contraseña_hash = generate_password_hash("1234")
     cursor.execute("""
-    INSERT OR IGNORE INTO productos (id, nombre, cantidad, precio, categoria, proveedor)
-    VALUES (1, 'Producto Prueba', 10, 500, 'General', 'Proveedor Demo');
+    INSERT OR REPLACE INTO usuarios (id, nombre, correo, contraseña, rol)
+    VALUES (1, 'Admin', 'admin@test.com', ?, 'admin');
+    """, (contraseña_hash,))
+
+    # Producto de prueba
+    cursor.execute("""
+    INSERT OR REPLACE INTO productos (
+        id, nombre, cantidad, precio, categoria, proveedor, negocio, codigo_barras, fecha_vencimiento, qr_path
+    ) VALUES (
+        1, 'Producto Prueba', 10, 500, 'General', 'Proveedor Demo', 'DemoNegocio', '000111222', NULL, NULL
+    );
     """)
 
     conn.commit()

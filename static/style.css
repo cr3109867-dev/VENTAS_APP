@@ -16,7 +16,7 @@ body.app-theme {
 ========================= */
 
 header {
-    background-color: #1e1e1e;
+    background-color: #1c1c1c;
     color: #f1f1f1;
     padding: 15px;
     text-align: center;
@@ -25,24 +25,33 @@ header {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
+.navbar-brand img {
+    filter: brightness(0) invert(1);
+    /* Logo blanco sobre fondo oscuro */
+}
+
 nav a {
-    margin: 0 12px;
+    margin: 0 8px;
     text-decoration: none;
-    font-weight: bold;
-    color: #ecf0f1;
-    transition: color 0.3s ease;
+    font-weight: 500;
+    color: #f1f1f1;
+    transition: all 0.3s ease;
 }
 
 nav a:hover {
-    color: #1abc9c;
+    color: #00c851;
+    transform: scale(1.05);
 }
 
 footer {
-    background-color: #1e1e1e;
-    color: #f1f1f1;
-    font-size: 0.9rem;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #111;
+    color: #ccc;
     text-align: center;
-    padding: 12px;
+    padding: 10px 0;
+    font-size: 14px;
     box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4);
 }
 
@@ -290,39 +299,61 @@ h2 {
 }
 
 
-/* Ajustes de colores para tema oscuro fijo */
+/* =========================
+   Colores para tema oscuro
+========================= */
 
 .text-primary {
     color: #4da3ff !important;
-    /* Azul claro que sí se ve en fondo oscuro */
 }
 
 .text-info {
     color: #17a2b8 !important;
-    /* Azul turquesa */
 }
 
 .text-light {
     color: #f1f1f1 !important;
-    /* Gris claro */
 }
 
 .text-muted {
     color: #b0b0b0 !important;
-    /* Gris tenue */
 }
 
 .text-success {
     color: #28a745 !important;
-    /* Verde brillante */
 }
 
 .text-danger {
     color: #dc3545 !important;
-    /* Rojo brillante */
 }
 
 .text-warning {
     color: #ffc107 !important;
-    /* Amarillo fuerte */
+}
+
+
+/* =========================
+   Gradientes y detalles
+========================= */
+
+.text-gradient {
+    background: linear-gradient(to right, #007bff, #00c851);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.card h5 {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.card ul li {
+    margin-bottom: 0.5rem;
+}
+
+.navbar-brand img {
+    filter: none;
+    /* porque el logo ya es blanco */
+    vertical-align: middle;
 }

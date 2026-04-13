@@ -14,6 +14,31 @@ Incluye autenticación de usuarios, manejo de productos, generación de reportes
 
 ---
 
+
+## 🚀 Características principales
+
+- **Gestión de usuarios** con roles (`admin`, `vendedor`) y soporte multi-negocio.
+- **Inventario avanzado**:
+  - Control de stock en tiempo real.
+  - Registro de proveedor, categoría y fecha de vencimiento.
+  - Generación automática de códigos QR.
+- **Ventas**:
+  - Carrito dinámico con validación de stock.
+  - Escaneo automático por código de barras.
+  - Registro de cliente y cálculo de total acumulado.
+- **Reportes**:
+  - Ganancias totales.
+  - Productos más vendidos.
+  - Clientes más frecuentes.
+  - Filtros por rango de fechas.
+- **Dashboard visual** con gráficas interactivas (Chart.js) y alertas de stock bajo.
+
+
+
+
+
+--
+
 ## 📦 Instalación
 
 1. **Clonar el repositorio**
@@ -32,8 +57,13 @@ python --version
 ## Instalar dependencias
 pip install -r requirements.txt
 
+
+
+
 🗄️ Inicialización de la base de datos
 Tienes dos opciones para crear la base de datos:
+
+
 
 Opción A: Usar schema.sql (recomendado)
 
@@ -41,17 +71,20 @@ Este archivo contiene la definición exacta de las tablas.
 Ejecuta: 
 sqlite3 ventas_app.db < schema.sql
 
+
+
 Opción B: Usar init_db.py
 
 Este script crea las tablas y además inserta datos de prueba (usuario Admin y un producto demo).
 Ejecuta:
 python init_db.py
 
+
 ⚠️ Usa solo una de las dos opciones. Si ya tienes la base creada, no es necesario volver a ejecutar estos pasos.
 
 
 ## Ejecutar la aplicación
-flask run o python 
+flask run o python app.py 
 
 Abre en el navegador: http://127.0.0.1:5000
 
