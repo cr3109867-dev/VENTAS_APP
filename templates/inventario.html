@@ -33,6 +33,7 @@
                     <th>📊 Stock</th>
                     <th>🚚 Proveedor</th>
                     <th>🔢 Código de barras</th>
+                    <th>📅 Vencimiento</th>
                     <th>⚙️ Acciones</th>
                 </tr>
             </thead>
@@ -44,20 +45,31 @@
                     <td class="fw-bold text-success">${{ "{:,.0f}".format(producto.precio) }}</td>
                     <td>
                         {% if producto.cantidad == 0 %}
-                        <span class="badge bg-danger shadow-sm">❌ Sin stock</span> {% elif producto.cantidad
-                        < 5 %} <span class="badge bg-warning text-dark shadow-sm">⚠️ Bajo ({{ producto.cantidad }})</span>
+                        <span class="badge bg-danger shadow-sm" data-bs-toggle="tooltip" title="Reordenar producto urgentemente">❌ Sin stock</span> {% elif producto.cantidad
+                        < 5 %} <span class="badge bg-warning text-dark shadow-sm" data-bs-toggle="tooltip"
+                            title="Últimas unidades disponibles, considera reabastecer">⚠️ Bajo ({{ producto.cantidad }})</span>
                             {% else %}
-                            <span class="badge bg-success shadow-sm">✅ {{ producto.cantidad }}</span> {% endif %}
+                            <span class="badge bg-success shadow-sm" data-bs-toggle="tooltip" title="Stock suficiente">✅ {{ producto.cantidad }}</span> {% endif %}
                     </td>
                     <td>{{ producto.proveedor }}</td>
                     <td>{{ producto.codigo_barras }}</td>
                     <td>
+                        {% if producto.fecha_vencimiento %} {% set dias_restantes = (producto.fecha_vencimiento - current_date).days %} {% if dias_restantes
+                        < 0 %} <span class="badge bg-secondary shadow-sm">❌ Vencido ({{ producto.fecha_vencimiento }})</span>
+                            {% elif dias_restantes
+                            < 30 %} <span class="badge bg-danger shadow-sm">⚠️ Próximo a vencer ({{ producto.fecha_vencimiento }})</span>
+                                {% else %}
+                                <span class="badge bg-success shadow-sm">✅ {{ producto.fecha_vencimiento }}</span> {% endif %} {% else %}
+                                <span class="text-muted">—</span> {% endif %}
+                    </td>
+                    <td>
                         {% if session.get("rol") == "admin" %}
-                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm shadow-sm">✏️</a>
+                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm shadow-sm" data-bs-toggle="tooltip" title="Editar producto">✏️</a>
                         <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?')">
-                            <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm">🗑️</button>
+                            <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm" data-bs-toggle="tooltip" title="Eliminar producto">🗑️</button>
                         </form>
-                        {% else %}
+                        {% if producto.qr_path %}
+                        <a href="{{ url_for('static', filename=producto.qr_path) }}" target="_blank" class="btn btn-outline-info btn-sm shadow-sm" data-bs-toggle="tooltip" title="Ver QR">📱</a> {% endif %} {% else %}
                         <span class="text-muted">🔒</span> {% endif %}
                     </td>
                 </tr>
@@ -69,6 +81,7 @@
 </div>
 {% endblock %} {% block scripts %}
 <script>
+    // Buscador por código de barras
     document.getElementById("buscar_codigo").addEventListener("input", function() {
         const filtro = this.value.trim().toLowerCase();
         const filas = document.querySelectorAll("#tabla_productos tr");
@@ -77,5 +90,11 @@
             fila.style.display = (codigo.includes(filtro) || filtro === "") ? "" : "none";
         });
     });
+
+    // Activar tooltips de Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
 </script>
 {% endblock %}

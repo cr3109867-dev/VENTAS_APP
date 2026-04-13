@@ -10,6 +10,21 @@
         <p class="text-muted">Resumen general del negocio {{ negocio_actual|capitalize }}</p>
     </div>
 
+    <!-- FILTROS DE FECHA -->
+    <form method="POST" class="row g-3 mb-4">
+        <div class="col-auto">
+            <label for="fecha_inicio" class="form-label">Desde</label>
+            <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio }}">
+        </div>
+        <div class="col-auto">
+            <label for="fecha_fin" class="form-label">Hasta</label>
+            <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin }}">
+        </div>
+        <div class="col-auto align-self-end">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </div>
+    </form>
+
     <!-- KPI CARDS -->
     <div class="row mb-4">
         <div class="col-md-4">
@@ -32,9 +47,9 @@
 
         <div class="col-md-4">
             <div class="card shadow-sm text-center p-3 rounded">
-                <h6 class="text-muted">Estado</h6>
+                <h6 class="text-muted">Clientes distintos</h6>
                 <h3 class="text-primary fw-bold">
-                    Activo
+                    {{ clientes_top|length }}
                 </h3>
             </div>
         </div>
@@ -65,7 +80,7 @@
             </div>
         </div>
 
-        <!-- TABLA DETALLE -->
+        <!-- TABLA DETALLE PRODUCTOS -->
         <div class="card shadow-sm mt-4 rounded">
             <div class="card-body">
                 <h5 class="mb-3">📋 Detalle de productos vendidos</h5>
@@ -85,6 +100,29 @@
                             <td>{{ cantidad }}</td>
                             <td>${{ "{:,.0f}".format(precios_productos[loop.index0]) }}</td>
                             <td>${{ "{:,.0f}".format(cantidad * precios_productos[loop.index0]) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TABLA CLIENTES FRECUENTES -->
+        <div class="card shadow-sm mt-4 rounded">
+            <div class="card-body">
+                <h5 class="mb-3">👥 Clientes más frecuentes</h5>
+                <table class="table table-hover table-bordered align-middle text-center mb-0">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Compras</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente, compras in clientes_top %}
+                        <tr>
+                            <td>{{ cliente }}</td>
+                            <td>{{ compras }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -120,8 +158,8 @@
             data: { labels: nombres, datasets: [{ data: cantidades, backgroundColor: colores }] },
             options: {
                 plugins: {
-                    legend: { position: 'bottom', labels: { color: '#f1f1f1' } },
-                    title: { display: true, text: 'Productos más vendidos', color: '#f1f1f1' }
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: 'Productos más vendidos' }
                 }
             }
         });
@@ -134,11 +172,11 @@
                 responsive: true,
                 plugins: {
                     legend: { display: false },
-                    title: { display: true, text: 'Ganancias por producto', color: '#f1f1f1' }
+                    title: { display: true, text: 'Ganancias por producto' }
                 },
                 scales: {
-                    x: { ticks: { color: '#f1f1f1' }, grid: { color: '#444' } },
-                    y: { ticks: { color: '#f1f1f1' }, grid: { color: '#444' }, beginAtZero: true }
+                    x: { beginAtZero: true },
+                    y: { beginAtZero: true }
                 }
             }
         });

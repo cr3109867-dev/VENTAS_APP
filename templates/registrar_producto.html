@@ -2,40 +2,61 @@
 <div class="container mt-4">
     <!-- Encabezado -->
     <h2 class="border-bottom pb-2 text-center mb-4">
-        📝 Registrar nuevo producto en {{ negocio_actual|capitalize }}
+        📝 Registrar nuevo producto en {{ negocio_actual|replace('_',' ')|capitalize }}
     </h2>
 
     <!-- Formulario -->
     <form method="POST" class="form-producto shadow-sm p-4 rounded">
         <div class="mb-3">
             <label for="nombre" class="form-label fw-semibold">Nombre</label>
-            <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Ej: Camiseta" required>
+            <input type="text" id="nombre" name="nombre" class="form-control" placeholder="{% if negocio_actual == 'farmacia' %}Ej: Aspirina{% 
+                             elif negocio_actual == 'ferreteria' %}Ej: Martillo{% 
+                             elif negocio_actual == 'mercado' %}Ej: Manzana{% 
+                             elif negocio_actual == 'tienda_de_ropa' %}Ej: Camiseta{% 
+                             else %}Ej: Producto{% endif %}" required>
         </div>
 
         <div class="mb-3">
             <label for="categoria" class="form-label fw-semibold">Categoría</label>
-            <input type="text" id="categoria" name="categoria" class="form-control" placeholder="Ej: Ropa" required>
+            <input type="text" id="categoria" name="categoria" class="form-control" placeholder="{% if negocio_actual == 'farmacia' %}Ej: Analgésicos{% 
+                             elif negocio_actual == 'ferreteria' %}Ej: Herramientas{% 
+                             elif negocio_actual == 'mercado' %}Ej: Frutas{% 
+                             elif negocio_actual == 'tienda_de_ropa' %}Ej: Prendas{% 
+                             else %}Ej: Categoría{% endif %}" required>
         </div>
 
         <div class="mb-3">
             <label for="precio" class="form-label fw-semibold">Precio</label>
             <input type="number" step="0.01" id="precio" name="precio" class="form-control" placeholder="Ej: 5000" required>
+            <small class="text-muted">Ingrese el precio en pesos colombianos.</small>
         </div>
 
         <div class="mb-3">
             <label for="cantidad" class="form-label fw-semibold">Cantidad</label>
             <input type="number" id="cantidad" name="cantidad" class="form-control" placeholder="Ej: 50" required>
+            <small class="text-muted">Cantidad disponible en inventario.</small>
         </div>
 
         <div class="mb-3">
             <label for="proveedor" class="form-label fw-semibold">Proveedor</label>
-            <input type="text" id="proveedor" name="proveedor" class="form-control" placeholder="Ej: Distribuidora La 14" required>
+            <input type="text" id="proveedor" name="proveedor" class="form-control" placeholder="{% if negocio_actual == 'farmacia' %}Ej: Droguería Central{% 
+                             elif negocio_actual == 'ferreteria' %}Ej: Ferretería El Tornillo{% 
+                             elif negocio_actual == 'mercado' %}Ej: Distribuidora La Plaza{% 
+                             elif negocio_actual == 'tienda_de_ropa' %}Ej: Textiles La Moda{% 
+                             else %}Ej: Proveedor{% endif %}" required>
         </div>
 
         <div class="mb-3">
             <label for="codigo_barras" class="form-label fw-semibold">Código de barras</label>
             <input type="text" id="codigo_barras" name="codigo_barras" class="form-control" placeholder="Escanee el producto aquí">
             <small class="text-muted">Use la pistola lectora para llenar este campo automáticamente.</small>
+        </div>
+
+        <!-- Nuevo campo: fecha de vencimiento -->
+        <div class="mb-3">
+            <label for="fecha_vencimiento" class="form-label fw-semibold">Fecha de vencimiento</label>
+            <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="form-control">
+            <small class="text-muted">Opcional: útil para farmacia y mercado.</small>
         </div>
 
         <!-- Botón -->

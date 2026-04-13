@@ -1,19 +1,86 @@
 {% extends "base.html" %} {% block title %}Inicio{% endblock %} {% block content %}
-<h2>Bienvenido al sistema de ventas</h2>
-<p>Selecciona una opción del menú para comenzar:</p>
 
-{% if session.get("usuario_nombre") %}
-<p>Hola, {{ session["usuario_nombre"] }} 👋</p>
-<ul>
-    <li><a href="{{ url_for('inventario') }}">Inventario</a></li>
-    <li><a href="{{ url_for('ventas') }}">Ventas</a></li>
-    <li><a href="{{ url_for('reporte') }}">Reporte</a></li>
-    <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
-</ul>
-{% else %}
-<p>No has iniciado sesión.</p>
-<ul>
-    <li><a href="{{ url_for('login') }}">Iniciar sesión</a></li>
-    <li><a href="{{ url_for('register') }}">Registrarse</a></li>
-</ul>
-{% endif %} {% endblock %}
+<div class="container mt-5">
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0 p-5 bg-dark text-light">
+
+                <!-- HEADER -->
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold text-gradient">🚀 Bienvenido a Ventas App</h1>
+                    <p class="fs-5 text-muted">La plataforma inteligente para gestionar tu negocio</p>
+                </div>
+
+                <!-- FEATURES -->
+                <div class="row text-center mb-4">
+                    <div class="col-md-3">
+                        <i class="fas fa-box-open fa-3x text-info mb-2"></i>
+                        <h5>Inventario</h5>
+                        <p class="small">Controla tus productos y existencias fácilmente.</p>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-cash-register fa-3x text-success mb-2"></i>
+                        <h5>Ventas</h5>
+                        <p class="small">Registra ventas y mantén tus ingresos organizados.</p>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-chart-line fa-3x text-warning mb-2"></i>
+                        <h5>Reportes</h5>
+                        <p class="small">Obtén estadísticas claras y profesionales.</p>
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-users fa-3x text-primary mb-2"></i>
+                        <h5>Usuarios</h5>
+                        <p class="small">Administra roles y accesos (solo admin).</p>
+                    </div>
+                </div>
+
+                <!-- EXTRA INFO -->
+                <div class="mt-4">
+                    <h4 class="fw-bold">¿Por qué usar Ventas App?</h4>
+                    <p>
+                        Ventas App está diseñada para pequeños negocios que necesitan una solución rápida y confiable. Con una interfaz moderna y fácil de usar, podrás:
+                    </p>
+                    <ul>
+                        <li>📱 Acceder desde cualquier dispositivo con conexión a internet.</li>
+                        <li>🔒 Mantener tus datos seguros con contraseñas encriptadas.</li>
+                        <li>⚡ Optimizar tu tiempo con reportes automáticos.</li>
+                        <li>🎨 Personalizar tu panel según el tipo de negocio.</li>
+                    </ul>
+                </div>
+
+                <!-- SESSION LOGIC -->
+                {% if session.get("usuario_nombre") %}
+                <div class="text-center mt-4">
+                    <h4>Hola, {{ session["usuario_nombre"] }} 👋</h4>
+                    <p class="mb-3">Accede directamente a tus módulos:</p>
+                    <a href="{{ url_for('inventario') }}" class="btn btn-info btn-lg me-2">
+                            📦 Inventario
+                        </a>
+                    <a href="{{ url_for('ventas') }}" class="btn btn-success btn-lg me-2">
+                            💰 Ventas
+                        </a>
+                    <a href="{{ url_for('reporte') }}" class="btn btn-warning btn-lg me-2">
+                            📊 Reporte
+                        </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg">
+                            🚪 Cerrar sesión
+                        </a>
+                </div>
+                {% else %}
+                <div class="text-center mt-4">
+                    <p class="fs-5">No has iniciado sesión. Selecciona una opción para comenzar:</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg me-3">
+                        <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-success btn-lg">
+                        <i class="fas fa-user-plus"></i> Registrarse
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

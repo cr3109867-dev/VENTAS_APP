@@ -1,38 +1,46 @@
 {% extends "base.html" %} {% block title %}Editar producto{% endblock %} {% block content %}
-<div class="container">
-    <h1>Editar producto</h1>
+<div class="container mt-4">
+    <h2 class="border-bottom pb-2 text-center">✏️ Editar producto</h2>
 
     <form method="POST" class="card p-4 shadow-sm">
         <div class="form-group mb-3">
-            <label for="nombre">Nombre</label>
+            <label for="nombre" class="fw-semibold">Nombre</label>
             <input type="text" id="nombre" name="nombre" class="form-control" value="{{ producto.nombre }}" required>
         </div>
 
         <div class="form-group mb-3">
-            <label for="categoria">Categoría</label>
+            <label for="categoria" class="fw-semibold">Categoría</label>
             <input type="text" id="categoria" name="categoria" class="form-control" value="{{ producto.categoria }}" required>
         </div>
 
         <div class="form-group mb-3">
-            <label for="precio">Precio</label>
-            <input type="number" id="precio" name="precio" class="form-control" value="{{ producto.precio }}" required>
+            <label for="precio" class="fw-semibold">Precio</label>
+            <input type="number" id="precio" name="precio" class="form-control" value="{{ producto.precio }}" step="0.01" required>
         </div>
 
         <div class="form-group mb-3">
-            <label for="cantidad">Cantidad</label>
+            <label for="cantidad" class="fw-semibold">Cantidad</label>
             <input type="number" id="cantidad" name="cantidad" class="form-control" value="{{ producto.cantidad }}" required>
         </div>
 
         <div class="form-group mb-3">
-            <label for="proveedor">Proveedor</label>
-            <input type="text" id="proveedor" name="proveedor" class="form-control" value="{{ producto.proveedor }}" required>
+            <label for="proveedor" class="fw-semibold">Proveedor</label>
+            <input type="text" id="proveedor" name="proveedor" class="form-control" value="{{ producto.proveedor }}">
         </div>
 
-        <div class="d-flex justify-content-between mt-3">
-            <!-- Botón cancelar con tu estilo -->
-            <a href="{{ url_for('inventario') }}" class="btn cancelar">❌ Cancelar</a>
-            <!-- Botón actualizar con tu estilo -->
-            <button type="submit" class="btn editar">💾 Actualizar</button>
+        <div class="form-group mb-3">
+            <label for="codigo_barras" class="fw-semibold">Código de barras</label>
+            <input type="text" id="codigo_barras" name="codigo_barras" class="form-control" value="{{ producto.codigo_barras }}">
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="fecha_vencimiento" class="fw-semibold">Fecha de vencimiento</label>
+            <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="form-control" value="{{ producto.fecha_vencimiento }}">
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ url_for('inventario') }}" class="btn btn-outline-secondary fw-bold shadow-sm">❌ Cancelar</a>
+            <button type="submit" class="btn btn-primary fw-bold shadow-sm">💾 Actualizar</button>
         </div>
     </form>
 </div>

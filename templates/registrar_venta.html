@@ -23,7 +23,11 @@
                 <label class="form-label fw-semibold">Producto</label>
                 <select id="producto_id" name="producto_id" class="form-select" onchange="actualizarStock()">
                     {% for producto in productos %}
-                    <option value="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-precio="{{ producto.precio }}" data-stock="{{ producto.cantidad }}" data-codigo="{{ producto.codigo_barras }}">
+                    <option value="{{ producto.id }}" 
+                            data-nombre="{{ producto.nombre }}" 
+                            data-precio="{{ producto.precio }}" 
+                            data-stock="{{ producto.cantidad }}" 
+                            data-codigo="{{ producto.codigo_barras }}">
                         {{ producto.nombre }} (Stock: {{ producto.cantidad }})
                     </option>
                     {% endfor %}
@@ -156,7 +160,7 @@
         return confirm("¿Confirmar esta venta con " + carrito.length + " productos?");
     }
 
-    // ✅ Mejora: escaneo automático
+    // ✅ Escaneo automático
     document.getElementById("codigo_barras").addEventListener("input", function() {
         const codigo = this.value.trim();
         if (codigo !== "") {
@@ -177,7 +181,7 @@
                 alert("❌ Producto no encontrado con código: " + codigo);
             }
 
-            this.value = ""; // limpiar para el siguiente escaneo
+            this.value = "";
         }
     });
 

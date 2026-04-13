@@ -9,6 +9,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
+import qrcode
+import os
+import time
+
 
 app = Flask(__name__)
 
@@ -70,10 +74,17 @@ def register():
         contraseña_hash = generate_password_hash(contraseña)
 
         conn = get_db_connection()
+
+        # Verificar si ya existen usuarios
+        total = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+
+        # Si no hay usuarios, el primero será admin
+        rol = "admin" if total == 0 else "usuario"
+
         try:
             conn.execute(
                 "INSERT INTO usuarios (correo, contraseña, nombre, rol) VALUES (?, ?, ?, ?)",
-                (correo, contraseña_hash, nombre, "usuario"),
+                (correo, contraseña_hash, nombre, rol),
             )
             conn.commit()
         except:
@@ -85,6 +96,7 @@ def register():
         return redirect(url_for("login"))
 
     return render_template("register.html")
+
 
 # ---------------------------
 # LOGIN
@@ -387,11 +399,14 @@ def cambiar_rol(id):
 # ---------------------------
 # INVENTARIO
 # ---------------------------
+from flask import render_template, session, redirect, url_for, flash
+
 @app.route("/inventario")
 def inventario():
     """
     Muestra el inventario filtrado por el negocio actual.
     Cada producto está asociado a un negocio en la columna 'negocio'.
+    Incluye alertas de stock bajo, control de vencimiento y QR.
     """
     negocio_actual = session.get("negocio")
 
@@ -411,14 +426,22 @@ def inventario():
     finally:
         conn.close()
 
+    # Fecha actual para cálculo de vencimiento
+    current_date = datetime.now().date()
+
+
     return render_template(
         "inventario.html",
         productos=productos,
-        negocio_actual=negocio_actual
+        negocio_actual=negocio_actual,
+        current_date=current_date
     )
 
 
 
+# ---------------------------
+# REGISTRAR PRODUCTO (ADMIN)
+# ---------------------------
 # ---------------------------
 # REGISTRAR PRODUCTO (ADMIN)
 # ---------------------------
@@ -447,28 +470,41 @@ def registrar_producto():
             precio = float(request.form["precio"])
             cantidad = int(request.form["cantidad"])
             proveedor = request.form.get("proveedor", "").strip()
-            codigo_barras = request.form.get("codigo_barras", "").strip()  # ✅ Nuevo campo
+            codigo_barras = request.form.get("codigo_barras", "").strip()
+            fecha_vencimiento = request.form.get("fecha_vencimiento") or None
 
-            # Guardar producto asociado al negocio actual
-            conn = get_db_connection()
-            query = """
-                INSERT INTO productos (nombre, categoria, precio, cantidad, proveedor, codigo_barras, negocio)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """
-            conn.execute(query, (nombre, categoria, precio, cantidad, proveedor, codigo_barras, negocio_actual))
-            conn.commit()
+            # ✅ Generar QR dinámico con código de barras o nombre
+            qr_data = codigo_barras if codigo_barras else nombre
+            qr_img = qrcode.make(qr_data)
+            qr_folder = os.path.join("static", "qr")
+            os.makedirs(qr_folder, exist_ok=True)
+
+            # ✅ Añadir timestamp para evitar sobrescribir archivos
+            qr_filename = f"{nombre}_{codigo_barras or 'sin_codigo'}_{int(time.time())}.png"
+            qr_path = f"qr/{qr_filename}"
+
+            qr_img.save(os.path.join(qr_folder, qr_filename))
+
+            # ✅ Guardar producto asociado al negocio actual
+            with get_db_connection() as conn:
+                query = """
+                    INSERT INTO productos (nombre, categoria, precio, cantidad, proveedor, codigo_barras, negocio, fecha_vencimiento, qr_path)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+                conn.execute(query, (
+                    nombre, categoria, precio, cantidad, proveedor,
+                    codigo_barras, negocio_actual, fecha_vencimiento, qr_path
+                ))
+                conn.commit()
+
             flash(f"Producto '{nombre}' registrado en {negocio_actual}.", "success")
 
         except Exception as e:
             flash(f"Error al registrar producto: {str(e)}", "danger")
-        finally:
-            conn.close()
 
         return redirect(url_for("inventario"))
 
-    # Renderizar formulario con contexto del negocio
     return render_template("registrar_producto.html", negocio_actual=negocio_actual)
-
 
 
 # ---------------------------
@@ -477,43 +513,91 @@ def registrar_producto():
 @app.route("/editar_producto/<int:id>", methods=["GET", "POST"])
 def editar_producto(id):
     if session.get("rol") != "admin":
+        flash("No tienes permisos para editar productos.", "danger")
         return redirect(url_for("inventario"))
 
-    conn = get_db_connection()
-    producto = conn.execute("SELECT * FROM productos WHERE id=?", (id,)).fetchone()
+    negocio_actual = session.get("negocio")
+    if not negocio_actual:
+        flash("Debes seleccionar un negocio antes de editar productos.", "warning")
+        return redirect(url_for("seleccionar_negocio"))
+
+    # ✅ Cargar producto actual
+    with get_db_connection() as conn:
+        producto = conn.execute("SELECT * FROM productos WHERE id=?", (id,)).fetchone()
+
+    if not producto:
+        flash("Producto no encontrado.", "danger")
+        return redirect(url_for("inventario"))
 
     if request.method == "POST":
-        conn.execute(
-            "UPDATE productos SET nombre=?, categoria=?, precio=?, cantidad=?, proveedor=? WHERE id=?",
-            (
-                request.form["nombre"],
-                request.form["categoria"],
-                float(request.form["precio"]),
-                int(request.form["cantidad"]),
-                request.form["proveedor"],
-                id,
-            ),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            # Capturar datos del formulario
+            nombre = request.form["nombre"].strip()
+            categoria = request.form["categoria"].strip()
+            precio = float(request.form["precio"])
+            cantidad = int(request.form["cantidad"])
+            proveedor = request.form.get("proveedor", "").strip()
+            codigo_barras = request.form.get("codigo_barras", "").strip()
+            fecha_vencimiento = request.form.get("fecha_vencimiento") or None
+
+            # ✅ Regenerar QR dinámico
+            qr_data = codigo_barras if codigo_barras else nombre
+            qr_img = qrcode.make(qr_data)
+            qr_folder = os.path.join("static", "qr")
+            os.makedirs(qr_folder, exist_ok=True)
+            qr_filename = f"{nombre}_{codigo_barras or 'sin_codigo'}_{int(time.time())}.png"
+            qr_path = f"qr/{qr_filename}"
+            qr_img.save(os.path.join(qr_folder, qr_filename))
+
+            # ✅ Actualizar producto en BD
+            with get_db_connection() as conn:
+                conn.execute("""
+                    UPDATE productos
+                    SET nombre=?, categoria=?, precio=?, cantidad=?, proveedor=?, codigo_barras=?, negocio=?, fecha_vencimiento=?, qr_path=?
+                    WHERE id=?
+                """, (nombre, categoria, precio, cantidad, proveedor,
+                      codigo_barras, negocio_actual, fecha_vencimiento, qr_path, id))
+                conn.commit()
+
+            flash(f"Producto '{nombre}' actualizado correctamente.", "success")
+
+        except Exception as e:
+            flash(f"Error al editar producto: {str(e)}", "danger")
+
         return redirect(url_for("inventario"))
 
-    conn.close()
-    return render_template("editar_producto.html", producto=producto)
+    return render_template("editar_producto.html", producto=producto, negocio_actual=negocio_actual)
+
 
 # ---------------------------
-# ELIMINAR PRODUCTO
+# ELIMINAR PRODUCTO (ADMIN)
 # ---------------------------
 @app.route("/eliminar_producto/<int:id>", methods=["POST"])
 def eliminar_producto(id):
     if session.get("rol") != "admin":
+        flash("No tienes permisos para eliminar productos.", "danger")
         return redirect(url_for("inventario"))
 
-    conn = get_db_connection()
-    conn.execute("DELETE FROM productos WHERE id=?", (id,))
-    conn.commit()
-    conn.close()
+    try:
+        with get_db_connection() as conn:
+            # ✅ Verificar si el producto existe
+            producto = conn.execute("SELECT nombre FROM productos WHERE id=?", (id,)).fetchone()
+
+            if not producto:
+                flash("Producto no encontrado.", "warning")
+                return redirect(url_for("inventario"))
+
+            # ✅ Eliminar producto
+            conn.execute("DELETE FROM productos WHERE id=?", (id,))
+            conn.commit()
+
+        flash(f"Producto '{producto['nombre']}' eliminado correctamente.", "success")
+
+    except Exception as e:
+        flash(f"Error al eliminar producto: {str(e)}", "danger")
+
     return redirect(url_for("inventario"))
+
 
 # ---------------------------
 # Registrar venta
@@ -530,6 +614,7 @@ def registrar_venta():
             carrito = json.loads(carrito_json) if carrito_json else []
 
             cliente = request.form.get("cliente", "Consumidor Final")
+            # ✅ Usamos datetime.now correctamente
             fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             if not carrito:
@@ -547,12 +632,24 @@ def registrar_venta():
             )
             venta_id = cur.lastrowid  # obtener el ID de la venta recién creada
 
-            # 2️⃣ Insertar detalle de la venta
+            # 2️⃣ Insertar detalle de la venta con validación de stock
             for item in carrito:
                 producto_id = int(item["id"])
                 cantidad = int(item["cantidad"])
                 precio = float(item["precio"])
 
+                # Verificar stock disponible
+                stock_actual = conn.execute(
+                    "SELECT cantidad FROM productos WHERE id=?", (producto_id,)
+                ).fetchone()["cantidad"]
+
+                if cantidad > stock_actual:
+                    flash(f"Stock insuficiente para '{item['nombre']}'. Disponible: {stock_actual}", "danger")
+                    conn.rollback()  # cancelar la transacción
+                    conn.close()
+                    return redirect(url_for("registrar_venta"))
+
+                # Insertar detalle
                 conn.execute(
                     "INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?)",
                     (venta_id, producto_id, cantidad, precio)
@@ -576,6 +673,7 @@ def registrar_venta():
 
     conn.close()
     return render_template("registrar_venta.html", productos=productos)
+
 
 
 # ---------------------------
@@ -706,37 +804,55 @@ def exportar_ventas_pdf():
 # ---------------------------
 # Reporte
 # ---------------------------
-@app.route("/reporte")
+@app.route("/reporte", methods=["GET", "POST"])
 def reporte():
     conn = get_db_connection()
-    ventas = conn.execute("""
-        SELECT dv.cantidad, dv.precio, p.nombre
+
+    # Filtros de fecha desde el formulario
+    fecha_inicio = request.form.get("fecha_inicio")
+    fecha_fin = request.form.get("fecha_fin")
+
+    query = """
+        SELECT v.cliente, v.fecha, dv.cantidad, dv.precio, p.nombre
         FROM detalle_ventas dv
         JOIN productos p ON dv.producto_id = p.id
-    """).fetchall()
+        JOIN ventas v ON dv.venta_id = v.id
+    """
+    params = []
+    if fecha_inicio and fecha_fin:
+        query += " WHERE v.fecha BETWEEN ? AND ?"
+        params = [fecha_inicio, fecha_fin]
+
+    ventas = conn.execute(query, params).fetchall()
     conn.close()
 
     # ✅ Calcular ganancias totales
     ganancias = sum(v["cantidad"] * v["precio"] for v in ventas)
 
-    # ✅ Agrupar productos vendidos
+    # ✅ Agrupar productos vendidos y clientes frecuentes
     productos_vendidos = {}
     precios_productos = {}
+    clientes = {}
 
     for v in ventas:
         productos_vendidos[v["nombre"]] = productos_vendidos.get(v["nombre"], 0) + v["cantidad"]
         precios_productos[v["nombre"]] = v["precio"]
+        clientes[v["cliente"]] = clientes.get(v["cliente"], 0) + 1
 
-    # ✅ Ordenar productos más vendidos
+    # ✅ Ordenar productos más vendidos y clientes más frecuentes
     productos_top = sorted(productos_vendidos.items(), key=lambda x: x[1], reverse=True)
     precios_lista = [precios_productos[p[0]] for p in productos_top]
+    clientes_top = sorted(clientes.items(), key=lambda x: x[1], reverse=True)
 
     return render_template(
         "reporte.html",
         ganancias=ganancias,
         productos_top=productos_top,
-        precios_productos=precios_lista,
-        negocio_actual="farmacia"  # ⚠️ Ajusta según tu sesión o negocio actual
+        precios_productos=precios_lista,   # 👈 ahora sí se envía
+        clientes_top=clientes_top,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        negocio_actual=session.get("negocio", "general")  # usa el negocio actual de la sesión
     )
 
 # ---------------------------
