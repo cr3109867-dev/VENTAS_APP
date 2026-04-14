@@ -5,135 +5,139 @@
     <meta charset="UTF-8">
     <title>{% block title %}Ventas App{% endblock %}</title>
 
-    <!-- ✅ Bootstrap primero -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-    <!-- 🎨 Tu CSS al final (sobrescribe Bootstrap) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body class="app-theme">
 
-    <!-- =========================
-         Navbar elegante con logo blanco y fondo oscuro
-    ========================== -->
     <header>
         <nav class="navbar navbar-expand-lg" style="background-color:#1c1c1c; box-shadow:0 2px 5px rgba(0,0,0,0.5);">
             <div class="container-fluid">
-                <!-- 🔵 Logo y título -->
                 <a class="navbar-brand d-flex align-items-center text-white fw-bold" href="{{ url_for('index') }}">
-                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Ventas App" height="35" class="me-2 align-middle"> Ventas App
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Ventas App" height="35" class="me-2 align-middle">
+                    Ventas App
                 </a>
 
-
-                <!-- 🔗 NAV -->
                 <div class="ms-auto d-flex flex-wrap align-items-center gap-2">
                     <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-home"></i> Inicio
                     </a>
 
-                    {% if session.get("usuario_nombre") %} {% if session.get("negocio") == "farmacia" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-pills"></i> Medicamentos
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Farmacia
-                    </a>
-                    {% elif session.get("negocio") == "ferreteria" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-tools"></i> Materiales
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Ferretería
-                    </a>
-                    {% elif session.get("negocio") == "mercado" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-apple-alt"></i> Productos Mercado
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Mercado
-                    </a>
-                    {% elif session.get("negocio") == "tienda_de_ropa" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-boxes"></i> Inventario Tienda de Ropa
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Tienda de Ropa
-                    </a>
-                    {% endif %}
+                    {% if session.get("usuario_nombre") %}
 
-                    <a href="{{ url_for('registrar_producto') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-plus-square"></i> Producto
-                    </a>
+                        {% if session.get("negocio") == "farmacia" %}
+                        <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-pills"></i> Medicamentos
+                        </a>
+                        <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-receipt"></i> Ventas Farmacia
+                        </a>
 
-                    <a href="{{ url_for('registrar_venta') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-cash-register"></i> Venta
-                    </a>
+                        {% elif session.get("negocio") == "ferreteria" %}
+                        <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-tools"></i> Materiales
+                        </a>
+                        <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-receipt"></i> Ventas Ferretería
+                        </a>
 
-                    <a href="{{ url_for('reporte') }}" class="btn btn-outline-warning btn-sm">
-                        <i class="fas fa-chart-line"></i> Reporte
-                    </a>
+                        {% elif session.get("negocio") == "mercado" %}
+                        <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-apple-alt"></i> Productos Mercado
+                        </a>
+                        <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-receipt"></i> Ventas Mercado
+                        </a>
 
-                    {% if session.get("rol") == "admin" %}
-                    <a href="{{ url_for('usuarios') }}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-users"></i> Usuarios
-                    </a>
-                    {% endif %} {% if session.get("negocio") %}
-                    <span class="badge bg-primary">
-                                Negocio: {{ session['negocio']|replace('_',' ')|capitalize }}
-                            </span>
-                    <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-warning btn-sm">
-                        <i class="fas fa-sync-alt"></i> Cambiar negocio
-                    </a>
-                    {% endif %}
+                        {% elif session.get("negocio") == "tienda_de_ropa" %}
+                        <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-boxes"></i> Inventario Tienda de Ropa
+                        </a>
+                        <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-receipt"></i> Ventas Tienda de Ropa
+                        </a>
+                        {% endif %}
 
-                    <span class="badge bg-secondary">
+                        <a href="{{ url_for('registrar_producto') }}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-plus-square"></i> Producto
+                        </a>
+
+                        <a href="{{ url_for('registrar_venta') }}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-cash-register"></i> Venta
+                        </a>
+
+                        <a href="{{ url_for('reporte') }}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-chart-line"></i> Reporte
+                        </a>
+
+                        {% if session.get("rol") == "admin" %}
+                        <a href="{{ url_for('usuarios') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-users"></i> Usuarios
+                        </a>
+                        {% endif %}
+
+                        {% if negocio_info %}
+                        <span class="badge bg-primary">
+                            Negocio: {{ negocio_info.nombre }}
+                        </span>
+
+                        {% if request.endpoint == "seleccionar_negocio" and session.get("negocio") %}
+                        <a href="#datos-usuario-form" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-user-edit"></i> Datos del usuario
+                        </a>
+                        {% endif %}
+
+                        <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-sync-alt"></i> Cambiar negocio
+                        </a>
+                        {% endif %}
+
+                        <span class="badge bg-secondary">
                             👤 {{ session['usuario_nombre'] }}
                         </span>
 
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
-                        <i class="fas fa-sign-out-alt"></i> Salir
-                    </a>
+                        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-sign-out-alt"></i> Salir
+                        </a>
 
                     {% else %}
-                    <a href="{{ url_for('login') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-sign-in-alt"></i> Login
-                    </a>
-                    <a href="{{ url_for('register') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-user-plus"></i> Registro
-                    </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-user-plus"></i> Registro
+                        </a>
                     {% endif %}
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- =========================
-         Contenido principal
-    ========================== -->
-    <main class="container mt-4 mb-5">
-        {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+    <main class="container app-main mt-4 mb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
     </main>
 
-    <!-- =========================
-         Footer fijo al fondo
-    ========================== -->
-    <footer class="text-center text-light py-2" style="background-color:#111; position:fixed; bottom:0; width:100%;">
+    <footer class="text-center text-light py-2">
         © 2026 Ventas App - Desarrollado por Cristian
     </footer>
 
-    <!-- ✅ Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     {% block scripts %}{% endblock %}
 </body>
 
-</html>
+</html>s

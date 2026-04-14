@@ -8,7 +8,6 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash, check_password_hash
-import uuid
 import qrcode
 import os
 import time
@@ -27,14 +26,156 @@ app.permanent_session_lifetime = timedelta(minutes=30)
 EMAIL = "cr3109867@gmail.com"
 PASSWORD = "ksjg crnr jsvo acys"
 
+DASHBOARD_ROUTES = {
+    "farmacia": "dashboard_farmacia",
+    "ferreteria": "dashboard_ferreteria",
+    "mercado": "dashboard_mercado",
+    "tienda_de_ropa": "dashboard_tienda_de_ropa",
+}
+
+NEGOCIOS_INFO = {
+    "farmacia": {
+        "nombre": "Farmacia Central Salud",
+        "panel": "Farmacia",
+        "descripcion": "Control de medicamentos, inventario, vencimientos y ventas.",
+        "propietario": "Dra. María Fernanda Ríos",
+        "telefono": "+57 300 123 4567",
+        "correo": "farmacia@ventasapp.com",
+        "direccion": "Calle 10 # 15-20, Centro",
+        "nit": "901.456.321-0",
+        "icono": "fas fa-pills",
+        "color": "success",
+    },
+    "ferreteria": {
+        "nombre": "Ferretería El Tornillo Firme",
+        "panel": "Ferretería",
+        "descripcion": "Gestión de materiales, stock, compras y ventas del negocio.",
+        "propietario": "Carlos Andrés Méndez",
+        "telefono": "+57 301 222 3344",
+        "correo": "ferreteria@ventasapp.com",
+        "direccion": "Carrera 18 # 22-45, Zona Industrial",
+        "nit": "900.987.654-1",
+        "icono": "fas fa-tools",
+        "color": "warning",
+    },
+    "mercado": {
+        "nombre": "Mercado Fresco Hogar",
+        "panel": "Mercado",
+        "descripcion": "Seguimiento de productos, inventario diario y ventas rápidas.",
+        "propietario": "Ana Lucía Gómez",
+        "telefono": "+57 302 111 5566",
+        "correo": "mercado@ventasapp.com",
+        "direccion": "Avenida 5 # 30-12, Barrio Comercial",
+        "nit": "901.222.888-3",
+        "icono": "fas fa-apple-alt",
+        "color": "success",
+    },
+    "tienda_de_ropa": {
+        "nombre": "Tienda de Ropa Urban Style",
+        "panel": "Tienda de Ropa",
+        "descripcion": "Panel de categorías, productos destacados y rendimiento comercial.",
+        "propietario": "Laura Sofía Herrera",
+        "telefono": "+57 304 777 8899",
+        "correo": "ropa@ventasapp.com",
+        "direccion": "Centro Comercial Plaza Moda, Local 12",
+        "nit": "901.654.777-5",
+        "icono": "fas fa-store",
+        "color": "primary",
+    },
+}
+
+
 # ---------------------------
-# DB
+# HELPERS
 # ---------------------------
 def get_db_connection():
     conn = sqlite3.connect("ventas_app.db")
     conn.row_factory = sqlite3.Row
     conn.text_factory = lambda b: b.decode("utf-8")
     return conn
+
+
+def crear_tabla_datos_negocio():
+    conn = get_db_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS datos_negocio (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER NOT NULL,
+            negocio TEXT NOT NULL,
+            nombre_negocio TEXT,
+            responsable TEXT,
+            telefono TEXT,
+            correo TEXT,
+            direccion TEXT,
+            nit TEXT,
+            UNIQUE(usuario_id, negocio)
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def obtener_info_negocio(negocio=None):
+    negocio = negocio or session.get("negocio")
+    if not negocio:
+        return None
+
+    info = NEGOCIOS_INFO.get(negocio, {}).copy()
+
+    if session.get("usuario_id"):
+        crear_tabla_datos_negocio()
+        conn = get_db_connection()
+        fila = conn.execute("""
+            SELECT nombre_negocio, responsable, telefono, correo, direccion, nit
+            FROM datos_negocio
+            WHERE usuario_id = ? AND negocio = ?
+        """, (session["usuario_id"], negocio)).fetchone()
+        conn.close()
+
+        if fila:
+            info["nombre"] = fila["nombre_negocio"] or info.get("nombre", "")
+            info["propietario"] = fila["responsable"] or info.get("propietario", "")
+            info["telefono"] = fila["telefono"] or info.get("telefono", "")
+            info["correo"] = fila["correo"] or info.get("correo", "")
+            info["direccion"] = fila["direccion"] or info.get("direccion", "")
+            info["nit"] = fila["nit"] or info.get("nit", "")
+            info["registrado"] = True
+        else:
+            info["registrado"] = False
+
+    return info
+
+
+def redirigir_dashboard_por_negocio(negocio):
+    endpoint = DASHBOARD_ROUTES.get(negocio, "seleccionar_negocio")
+    return redirect(url_for(endpoint))
+
+
+def validar_dashboard(negocio_esperado):
+    if "usuario_id" not in session:
+        flash("Debes iniciar sesión para acceder al panel.", "warning")
+        return redirect(url_for("login")), None
+
+    negocio_actual = session.get("negocio")
+    if not negocio_actual:
+        flash("Debes seleccionar un negocio antes de entrar al dashboard.", "warning")
+        return redirect(url_for("seleccionar_negocio")), None
+
+    if negocio_actual != negocio_esperado:
+        flash("Te redirigimos al panel del negocio que tienes activo.", "info")
+        return redirigir_dashboard_por_negocio(negocio_actual), None
+
+    return None, negocio_actual
+
+
+@app.context_processor
+def inject_global_business_context():
+    negocio_actual = session.get("negocio")
+    return {
+        "negocio_actual": negocio_actual,
+        "negocio_info": obtener_info_negocio(negocio_actual),
+    }
+
 
 # ---------------------------
 # EMAIL
@@ -54,12 +195,14 @@ def enviar_correo(destinatario, asunto, html, remitente=EMAIL):
     except Exception as e:
         print("Error correo:", e)
 
+
 # ---------------------------
 # INDEX
 # ---------------------------
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 # ---------------------------
 # REGISTER
@@ -75,10 +218,7 @@ def register():
 
         conn = get_db_connection()
 
-        # Verificar si ya existen usuarios
         total = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-
-        # Si no hay usuarios, el primero será admin
         rol = "admin" if total == 0 else "usuario"
 
         try:
@@ -87,11 +227,12 @@ def register():
                 (correo, contraseña_hash, nombre, rol),
             )
             conn.commit()
-        except:
+        except Exception:
             flash("Correo ya registrado", "danger")
+            conn.close()
             return redirect(url_for("register"))
-        conn.close()
 
+        conn.close()
         flash("Registro exitoso", "success")
         return redirect(url_for("login"))
 
@@ -120,8 +261,6 @@ def login():
             session["rol"] = usuario["rol"] if usuario["rol"] else "usuario"
             session["negocio"] = usuario["negocio"]
 
-
-            # 🔥 ENVIAR CORREO DE LOGIN
             try:
                 html = render_template(
                     "emails/login_notification.html",
@@ -140,12 +279,12 @@ def login():
                 print("❌ Error enviando correo:", e)
 
             flash("Bienvenido " + usuario["nombre"], "success")
-            # 👉 Aquí cambiamos: en vez de ir al index, va a selección de negocio
             return redirect(url_for("seleccionar_negocio"))
 
         flash("Datos incorrectos", "danger")
 
     return render_template("login.html")
+
 
 # ---------------------------
 # FORGOT PASSWORD
@@ -162,10 +301,7 @@ def forgot_password():
         conn.close()
 
         if usuario:
-            # 🔐 Token seguro con email
             token = serializer.dumps(correo, salt="password-reset")
-
-            # ⏱ Link con token
             link = url_for("reset_password", token=token, _external=True)
 
             html = f"""
@@ -188,13 +324,13 @@ def forgot_password():
 
     return render_template("forgot_password.html")
 
+
 # ---------------------------
 # RESET PASSWORD
 # ---------------------------
 @app.route("/reset_password/<token>", methods=["GET", "POST"])
 def reset_password(token):
     try:
-        # ⏱ Expira en 900 segundos = 15 min
         correo = serializer.loads(token, salt="password-reset", max_age=900)
 
     except SignatureExpired:
@@ -236,6 +372,8 @@ def reset_password(token):
 
     conn.close()
     return render_template("reset_password.html")
+
+
 # ---------------------------
 # LOGOUT
 # ---------------------------
@@ -244,20 +382,19 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
+
 # ---------------------------
 # Seleccionar negocio
-#----------------------------
+# ---------------------------
 @app.route("/seleccionar_negocio", methods=["GET", "POST"])
 def seleccionar_negocio():
     if "usuario_id" not in session:
-        # Si no hay sesión activa, redirige al login
         return redirect(url_for("login"))
 
     if request.method == "POST":
         negocio = request.form.get("negocio")
         session["negocio"] = negocio
 
-        # ✅ Actualizar el negocio en la base de datos
         conn = get_db_connection()
         conn.execute(
             "UPDATE usuarios SET negocio=? WHERE id=?",
@@ -266,25 +403,75 @@ def seleccionar_negocio():
         conn.commit()
         conn.close()
 
-        # ✅ Mensaje flash de confirmación
         flash(f"Negocio cambiado a {negocio.capitalize()}", "success")
 
-        # Redirigir al dashboard correspondiente
-        if negocio == "tienda_de_ropa":
-            return redirect(url_for("dashboard_tienda_de_ropa"))
-        elif negocio == "farmacia":
-            return redirect(url_for("dashboard_farmacia"))
-        elif negocio == "ferreteria":
-            return redirect(url_for("dashboard_ferreteria"))
-        elif negocio == "mercado":
-            return redirect(url_for("dashboard_mercado"))
-        else:
-            flash("Seleccione un negocio válido", "danger")
-            return redirect(url_for("seleccionar_negocio"))
+        return render_template(
+            "seleccionar_negocio.html",
+            negocio_actual=negocio,
+            mostrar_formulario=True
+        )
 
-    # ✅ Mostrar la página de selección con el negocio actual
     negocio_actual = session.get("negocio")
-    return render_template("seleccionar_negocio.html", negocio_actual=negocio_actual)
+    return render_template(
+        "seleccionar_negocio.html",
+        negocio_actual=negocio_actual,
+        mostrar_formulario=False
+    )
+
+
+# ---------------------------
+# Guardar datos negocio
+# ---------------------------
+@app.route("/guardar_datos_negocio", methods=["POST"])
+def guardar_datos_negocio():
+    if "usuario_id" not in session:
+        flash("Debes iniciar sesión primero.", "warning")
+        return redirect(url_for("login"))
+
+    negocio = session.get("negocio")
+    if not negocio:
+        flash("Debes seleccionar un negocio primero.", "warning")
+        return redirect(url_for("seleccionar_negocio"))
+
+    crear_tabla_datos_negocio()
+
+    nombre_negocio = request.form.get("nombre_negocio", "").strip()
+    responsable = request.form.get("responsable", "").strip()
+    telefono = request.form.get("telefono", "").strip()
+    correo = request.form.get("correo", "").strip()
+    direccion = request.form.get("direccion", "").strip()
+    nit = request.form.get("nit", "").strip()
+
+    conn = get_db_connection()
+    existente = conn.execute("""
+        SELECT id FROM datos_negocio
+        WHERE usuario_id = ? AND negocio = ?
+    """, (session["usuario_id"], negocio)).fetchone()
+
+    if existente:
+        conn.execute("""
+            UPDATE datos_negocio
+            SET nombre_negocio=?, responsable=?, telefono=?, correo=?, direccion=?, nit=?
+            WHERE usuario_id=? AND negocio=?
+        """, (
+            nombre_negocio, responsable, telefono, correo, direccion, nit,
+            session["usuario_id"], negocio
+        ))
+    else:
+        conn.execute("""
+            INSERT INTO datos_negocio
+            (usuario_id, negocio, nombre_negocio, responsable, telefono, correo, direccion, nit)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session["usuario_id"], negocio, nombre_negocio, responsable,
+            telefono, correo, direccion, nit
+        ))
+
+    conn.commit()
+    conn.close()
+
+    flash("Datos guardados correctamente.", "success")
+    return redirigir_dashboard_por_negocio(negocio)
 
 
 # ---------------------------
@@ -292,26 +479,47 @@ def seleccionar_negocio():
 # ---------------------------
 @app.route("/dashboard_farmacia")
 def dashboard_farmacia():
+    respuesta, _ = validar_dashboard("farmacia")
+    if respuesta:
+        return respuesta
+
+    inventario_farmacia = [
+        {"nombre": "Paracetamol", "categoria": "Analgésicos", "stock": 50},
+        {"nombre": "Amoxicilina", "categoria": "Antibióticos", "stock": 30},
+        {"nombre": "Vitamina C", "categoria": "Vitaminas", "stock": 80},
+        {"nombre": "Ibuprofeno", "categoria": "Analgésicos", "stock": 60},
+    ]
+
     categorias = ["Analgésicos", "Antibióticos", "Vitaminas", "Otros"]
     ventas_categoria = [500, 300, 200, 100]
+
     proximos_vencer = [
         {"nombre": "Paracetamol", "lote": "A123", "vencimiento": "2026-05-10", "stock": 50},
         {"nombre": "Amoxicilina", "lote": "B456", "vencimiento": "2026-06-15", "stock": 30}
     ]
 
-    # Depuración: imprime en consola
-    print("Categorías:", categorias)
-    print("Ventas por categoría:", ventas_categoria)
+    total_productos = len(inventario_farmacia)
+    stock_total = sum(item["stock"] for item in inventario_farmacia)
 
-    return render_template("dashboard_farmacia.html",
-                           categorias=categorias,
-                           ventas_categoria=ventas_categoria,
-                           proximos_vencer=proximos_vencer)
+    return render_template(
+        "dashboard_farmacia.html",
+        categorias=categorias,
+        ventas_categoria=ventas_categoria,
+        proximos_vencer=proximos_vencer,
+        total_productos=total_productos,
+        stock_total=stock_total,
+    )
+
+
 # ---------------------------
 # DASHBOARD FERRETERÍA
 # ---------------------------
 @app.route("/dashboard_ferreteria")
 def dashboard_ferreteria():
+    respuesta, _ = validar_dashboard("ferreteria")
+    if respuesta:
+        return respuesta
+
     meses = ["Enero", "Febrero", "Marzo", "Abril"]
     ventas = [800, 1200, 1500, 1000]
     materiales = [
@@ -319,23 +527,27 @@ def dashboard_ferreteria():
         {"nombre": "Cemento", "unidad": "Kg", "stock": 100, "precio": 25000}
     ]
     bajo_stock = [m for m in materiales if m["stock"] < 30]
+    stock_total = sum(m["stock"] for m in materiales)
 
-    # Depuración: imprime en consola
-    print("Meses:", meses)
-    print("Ventas ferretería:", ventas)
-    print("Materiales:", materiales)
-    print("Bajo stock:", bajo_stock)
+    return render_template(
+        "dashboard_ferreteria.html",
+        meses=meses,
+        ventas=ventas,
+        materiales=materiales,
+        bajo_stock=bajo_stock,
+        stock_total=stock_total,
+    )
 
-    return render_template("dashboard_ferreteria.html",
-                           meses=meses,
-                           ventas=ventas,
-                           materiales=materiales,
-                           bajo_stock=bajo_stock)
+
 # ---------------------------
 # DASHBOARD MERCADO
 # ---------------------------
 @app.route("/dashboard_mercado")
 def dashboard_mercado():
+    respuesta, _ = validar_dashboard("mercado")
+    if respuesta:
+        return respuesta
+
     productos = [
         {"nombre": "Manzanas", "stock": 100, "precio": 2000},
         {"nombre": "Plátanos", "stock": 80, "precio": 1500},
@@ -343,21 +555,30 @@ def dashboard_mercado():
     ]
     ventas_diarias = [20, 35, 40, 25]
 
-    return render_template("dashboard_mercado.html",
-                           productos=productos,
-                           ventas_diarias=ventas_diarias)
+    return render_template(
+        "dashboard_mercado.html",
+        productos=productos,
+        ventas_diarias=ventas_diarias
+    )
+
 
 # ---------------------------
 # DASHBOARD TIENDA DE ROPA
 # ---------------------------
 @app.route("/dashboard_tienda_de_ropa")
 def dashboard_tienda_de_ropa():
+    respuesta, _ = validar_dashboard("tienda_de_ropa")
+    if respuesta:
+        return respuesta
+
     categorias = ["Ropa", "Electrodomésticos", "Juguetes"]
     ventas_categoria = [300, 500, 200]
 
-    return render_template("dashboard_tienda_de_ropa.html",
-                           categorias=categorias,
-                           ventas_categoria=ventas_categoria)
+    return render_template(
+        "dashboard_tienda_de_ropa.html",
+        categorias=categorias,
+        ventas_categoria=ventas_categoria
+    )
 
 
 # ---------------------------
@@ -373,6 +594,7 @@ def usuarios():
     conn.close()
 
     return render_template("usuarios.html", usuarios=usuarios)
+
 
 # ---------------------------
 # CAMBIAR ROL
@@ -396,39 +618,31 @@ def cambiar_rol(id):
 
     return redirect(url_for("usuarios"))
 
+
 # ---------------------------
 # INVENTARIO
 # ---------------------------
-from flask import render_template, session, redirect, url_for, flash
-
 @app.route("/inventario")
 def inventario():
-    """
-    Muestra el inventario filtrado por el negocio actual.
-    Cada producto está asociado a un negocio en la columna 'negocio'.
-    Incluye alertas de stock bajo, control de vencimiento y QR.
-    """
     negocio_actual = session.get("negocio")
 
     if not negocio_actual:
-        # Si no hay negocio en sesión, redirigimos al selector
         flash("Debes seleccionar un negocio antes de ver el inventario.", "warning")
         return redirect(url_for("seleccionar_negocio"))
 
+    conn = None
     try:
         conn = get_db_connection()
         query = "SELECT * FROM productos WHERE negocio = ?"
         productos = conn.execute(query, (negocio_actual,)).fetchall()
     except Exception as e:
-        # Manejo de errores más claro
         flash(f"Error al cargar inventario: {str(e)}", "danger")
         productos = []
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
-    # Fecha actual para cálculo de vencimiento
     current_date = datetime.now().date()
-
 
     return render_template(
         "inventario.html",
@@ -438,21 +652,11 @@ def inventario():
     )
 
 
-
-# ---------------------------
-# REGISTRAR PRODUCTO (ADMIN)
-# ---------------------------
 # ---------------------------
 # REGISTRAR PRODUCTO (ADMIN)
 # ---------------------------
 @app.route("/registrar_producto", methods=["GET", "POST"])
 def registrar_producto():
-    """
-    Permite registrar un nuevo producto en el inventario del negocio actual.
-    Solo los usuarios con rol 'admin' pueden acceder.
-    """
-
-    # Validar rol
     if session.get("rol") != "admin":
         flash("No tienes permisos para registrar productos.", "danger")
         return redirect(url_for("inventario"))
@@ -464,7 +668,6 @@ def registrar_producto():
 
     if request.method == "POST":
         try:
-            # Capturar y limpiar datos del formulario
             nombre = request.form["nombre"].strip()
             categoria = request.form["categoria"].strip()
             precio = float(request.form["precio"])
@@ -473,19 +676,16 @@ def registrar_producto():
             codigo_barras = request.form.get("codigo_barras", "").strip()
             fecha_vencimiento = request.form.get("fecha_vencimiento") or None
 
-            # ✅ Generar QR dinámico con código de barras o nombre
             qr_data = codigo_barras if codigo_barras else nombre
             qr_img = qrcode.make(qr_data)
             qr_folder = os.path.join("static", "qr")
             os.makedirs(qr_folder, exist_ok=True)
 
-            # ✅ Añadir timestamp para evitar sobrescribir archivos
             qr_filename = f"{nombre}_{codigo_barras or 'sin_codigo'}_{int(time.time())}.png"
             qr_path = f"qr/{qr_filename}"
 
             qr_img.save(os.path.join(qr_folder, qr_filename))
 
-            # ✅ Guardar producto asociado al negocio actual
             with get_db_connection() as conn:
                 query = """
                     INSERT INTO productos (nombre, categoria, precio, cantidad, proveedor, codigo_barras, negocio, fecha_vencimiento, qr_path)
@@ -521,7 +721,6 @@ def editar_producto(id):
         flash("Debes seleccionar un negocio antes de editar productos.", "warning")
         return redirect(url_for("seleccionar_negocio"))
 
-    # ✅ Cargar producto actual
     with get_db_connection() as conn:
         producto = conn.execute("SELECT * FROM productos WHERE id=?", (id,)).fetchone()
 
@@ -531,7 +730,6 @@ def editar_producto(id):
 
     if request.method == "POST":
         try:
-            # Capturar datos del formulario
             nombre = request.form["nombre"].strip()
             categoria = request.form["categoria"].strip()
             precio = float(request.form["precio"])
@@ -540,7 +738,6 @@ def editar_producto(id):
             codigo_barras = request.form.get("codigo_barras", "").strip()
             fecha_vencimiento = request.form.get("fecha_vencimiento") or None
 
-            # ✅ Regenerar QR dinámico
             qr_data = codigo_barras if codigo_barras else nombre
             qr_img = qrcode.make(qr_data)
             qr_folder = os.path.join("static", "qr")
@@ -549,14 +746,15 @@ def editar_producto(id):
             qr_path = f"qr/{qr_filename}"
             qr_img.save(os.path.join(qr_folder, qr_filename))
 
-            # ✅ Actualizar producto en BD
             with get_db_connection() as conn:
                 conn.execute("""
                     UPDATE productos
                     SET nombre=?, categoria=?, precio=?, cantidad=?, proveedor=?, codigo_barras=?, negocio=?, fecha_vencimiento=?, qr_path=?
                     WHERE id=?
-                """, (nombre, categoria, precio, cantidad, proveedor,
-                      codigo_barras, negocio_actual, fecha_vencimiento, qr_path, id))
+                """, (
+                    nombre, categoria, precio, cantidad, proveedor,
+                    codigo_barras, negocio_actual, fecha_vencimiento, qr_path, id
+                ))
                 conn.commit()
 
             flash(f"Producto '{nombre}' actualizado correctamente.", "success")
@@ -580,14 +778,12 @@ def eliminar_producto(id):
 
     try:
         with get_db_connection() as conn:
-            # ✅ Verificar si el producto existe
             producto = conn.execute("SELECT nombre FROM productos WHERE id=?", (id,)).fetchone()
 
             if not producto:
                 flash("Producto no encontrado.", "warning")
                 return redirect(url_for("inventario"))
 
-            # ✅ Eliminar producto
             conn.execute("DELETE FROM productos WHERE id=?", (id,))
             conn.commit()
 
@@ -614,7 +810,6 @@ def registrar_venta():
             carrito = json.loads(carrito_json) if carrito_json else []
 
             cliente = request.form.get("cliente", "Consumidor Final")
-            # ✅ Usamos datetime.now correctamente
             fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             if not carrito:
@@ -622,40 +817,34 @@ def registrar_venta():
                 conn.close()
                 return redirect(url_for("registrar_venta"))
 
-            # ✅ Calcular total acumulado
             total_venta = sum(float(item["precio"]) * int(item["cantidad"]) for item in carrito)
 
-            # 1️⃣ Insertar cabecera de la venta
             cur = conn.execute(
                 "INSERT INTO ventas (fecha, cliente, total, usuario_id) VALUES (?, ?, ?, ?)",
                 (fecha, cliente, total_venta, session.get("usuario_id") or 0)
             )
-            venta_id = cur.lastrowid  # obtener el ID de la venta recién creada
+            venta_id = cur.lastrowid
 
-            # 2️⃣ Insertar detalle de la venta con validación de stock
             for item in carrito:
                 producto_id = int(item["id"])
                 cantidad = int(item["cantidad"])
                 precio = float(item["precio"])
 
-                # Verificar stock disponible
                 stock_actual = conn.execute(
                     "SELECT cantidad FROM productos WHERE id=?", (producto_id,)
                 ).fetchone()["cantidad"]
 
                 if cantidad > stock_actual:
                     flash(f"Stock insuficiente para '{item['nombre']}'. Disponible: {stock_actual}", "danger")
-                    conn.rollback()  # cancelar la transacción
+                    conn.rollback()
                     conn.close()
                     return redirect(url_for("registrar_venta"))
 
-                # Insertar detalle
                 conn.execute(
                     "INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?)",
                     (venta_id, producto_id, cantidad, precio)
                 )
 
-                # 3️⃣ Actualizar stock
                 conn.execute(
                     "UPDATE productos SET cantidad = cantidad - ? WHERE id = ?",
                     (cantidad, producto_id)
@@ -673,7 +862,6 @@ def registrar_venta():
 
     conn.close()
     return render_template("registrar_venta.html", productos=productos)
-
 
 
 # ---------------------------
@@ -696,14 +884,13 @@ def ventas():
     return render_template("ventas.html", ventas=ventas)
 
 
-#----------------------------
+# ---------------------------
 # Detalle de venta
-#----------------------------
+# ---------------------------
 @app.route("/ventas/<int:venta_id>")
 def detalle_venta(venta_id):
     conn = get_db_connection()
 
-    # Traer cabecera de la venta
     venta = conn.execute("""
         SELECT v.id, v.fecha, v.cliente, v.total, u.nombre AS vendedor
         FROM ventas v
@@ -711,7 +898,6 @@ def detalle_venta(venta_id):
         WHERE v.id = ?
     """, (venta_id,)).fetchone()
 
-    # Traer detalle de productos
     detalle = conn.execute("""
         SELECT d.producto_id, p.nombre AS producto, d.cantidad, d.precio
         FROM detalle_ventas d
@@ -738,10 +924,8 @@ def exportar_ventas_excel():
     """).fetchall()
     conn.close()
 
-    # Convertir a DataFrame
     df = pd.DataFrame(ventas, columns=["id", "fecha", "cliente", "total", "vendedor"])
 
-    # Guardar en Excel
     filename = "ventas.xlsx"
     df.to_excel(filename, index=False)
 
@@ -756,7 +940,6 @@ def exportar_ventas_pdf():
     from fpdf import FPDF
     conn = get_db_connection()
 
-    # Traer todas las ventas
     ventas = conn.execute("""
         SELECT v.id, v.fecha, v.cliente, v.total, u.nombre AS vendedor
         FROM ventas v
@@ -770,14 +953,12 @@ def exportar_ventas_pdf():
     pdf.cell(200, 10, "Reporte de Ventas", ln=True, align="C")
     pdf.ln(10)
 
-    # Recorrer cada venta
     for v in ventas:
         pdf.set_font("Arial", "B", 12)
         pdf.cell(200, 10, f"Venta #{v['id']} - Cliente: {v['cliente']} - Total: ${v['total']:,.2f}", ln=True)
         pdf.set_font("Arial", size=10)
         pdf.cell(200, 8, f"Fecha: {v['fecha']} | Vendedor: {v['vendedor'] if v['vendedor'] else 'N/A'}", ln=True)
 
-        # Traer detalle de productos
         detalle = conn.execute("""
             SELECT d.cantidad, d.precio, p.nombre AS producto
             FROM detalle_ventas d
@@ -785,12 +966,16 @@ def exportar_ventas_pdf():
             WHERE d.venta_id = ?
         """, (v["id"],)).fetchall()
 
-        # Listar productos
         for d in detalle:
             subtotal = d["cantidad"] * d["precio"]
-            pdf.cell(200, 8, f"- {d['producto']} | Cant: {d['cantidad']} | Precio: ${d['precio']:,.2f} | Subtotal: ${subtotal:,.2f}", ln=True)
+            pdf.cell(
+                200,
+                8,
+                f"- {d['producto']} | Cant: {d['cantidad']} | Precio: ${d['precio']:,.2f} | Subtotal: ${subtotal:,.2f}",
+                ln=True
+            )
 
-        pdf.ln(5)  # espacio entre ventas
+        pdf.ln(5)
 
     conn.close()
 
@@ -800,7 +985,6 @@ def exportar_ventas_pdf():
     return send_file(filename, as_attachment=True)
 
 
-
 # ---------------------------
 # Reporte
 # ---------------------------
@@ -808,7 +992,6 @@ def exportar_ventas_pdf():
 def reporte():
     conn = get_db_connection()
 
-    # Filtros de fecha desde el formulario
     fecha_inicio = request.form.get("fecha_inicio")
     fecha_fin = request.form.get("fecha_fin")
 
@@ -826,10 +1009,8 @@ def reporte():
     ventas = conn.execute(query, params).fetchall()
     conn.close()
 
-    # ✅ Calcular ganancias totales
     ganancias = sum(v["cantidad"] * v["precio"] for v in ventas)
 
-    # ✅ Agrupar productos vendidos y clientes frecuentes
     productos_vendidos = {}
     precios_productos = {}
     clientes = {}
@@ -839,7 +1020,6 @@ def reporte():
         precios_productos[v["nombre"]] = v["precio"]
         clientes[v["cliente"]] = clientes.get(v["cliente"], 0) + 1
 
-    # ✅ Ordenar productos más vendidos y clientes más frecuentes
     productos_top = sorted(productos_vendidos.items(), key=lambda x: x[1], reverse=True)
     precios_lista = [precios_productos[p[0]] for p in productos_top]
     clientes_top = sorted(clientes.items(), key=lambda x: x[1], reverse=True)
@@ -848,12 +1028,13 @@ def reporte():
         "reporte.html",
         ganancias=ganancias,
         productos_top=productos_top,
-        precios_productos=precios_lista,   # 👈 ahora sí se envía
+        precios_productos=precios_lista,
         clientes_top=clientes_top,
         fecha_inicio=fecha_inicio,
         fecha_fin=fecha_fin,
-        negocio_actual=session.get("negocio", "general")  # usa el negocio actual de la sesión
+        negocio_actual=session.get("negocio", "general")
     )
+
 
 # ---------------------------
 # MAIN

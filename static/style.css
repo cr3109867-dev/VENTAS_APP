@@ -7,7 +7,7 @@ body.app-theme {
     color: #f1f1f1;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
-    padding: 0;
+    padding: 0 0 90px 0;
 }
 
 
@@ -26,8 +26,8 @@ header {
 }
 
 .navbar-brand img {
-    filter: brightness(0) invert(1);
-    /* Logo blanco sobre fondo oscuro */
+    filter: none;
+    vertical-align: middle;
 }
 
 nav a {
@@ -53,13 +53,15 @@ footer {
     padding: 10px 0;
     font-size: 14px;
     box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
 }
 
 
 /* =========================
-   Contenedor
+   Contenedor principal
 ========================= */
 
+.app-main.container,
 .container {
     width: 90%;
     margin: 20px auto;
@@ -68,6 +70,44 @@ footer {
     background-color: #1e1e1e;
     color: #f1f1f1;
     box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+
+/* =========================
+   Formulario datos negocio
+========================= */
+
+.datos-negocio-wrapper {
+    margin-top: 40px;
+}
+
+.datos-negocio-card {
+    background: linear-gradient(135deg, #181818 0%, #232323 65%, #1d2a38 100%);
+    border: 1px solid #333;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.datos-negocio-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.datos-negocio-header h3 {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.datos-negocio-header p {
+    color: #c8d0d8;
+    font-size: 0.98rem;
+}
+
+.negocio-select-btn {
+    min-height: 65px;
+    font-weight: 700;
+    font-size: 1.05rem;
 }
 
 
@@ -208,6 +248,15 @@ textarea:focus {
     font-size: 0.95rem;
 }
 
+.card h5 {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.card ul li {
+    margin-bottom: 0.5rem;
+}
+
 
 /* =========================
    Alerts elegantes
@@ -343,17 +392,26 @@ h2 {
     -webkit-text-fill-color: transparent;
 }
 
-.card h5 {
-    font-weight: bold;
-    margin-top: 10px;
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 992px) {
+    .chart-container {
+        width: 100%;
+        height: 320px;
+    }
 }
 
-.card ul li {
-    margin-bottom: 0.5rem;
-}
+@media (max-width: 576px) {
+    .app-main.container,
+    .container {
+        width: 94%;
+        padding: 18px;
+    }
 
-.navbar-brand img {
-    filter: none;
-    /* porque el logo ya es blanco */
-    vertical-align: middle;
+    .datos-negocio-card {
+        padding: 20px 16px;
+    }
 }
