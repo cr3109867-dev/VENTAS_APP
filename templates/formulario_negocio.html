@@ -1,0 +1,34 @@
+{% extends "base.html" %} {% block title %}Formulario {{ tipo|capitalize }}{% endblock %} {% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📋 Registrar {{ tipo|capitalize }}</h2>
+
+    <form method="POST">
+        <!-- Nombre del negocio -->
+        <div class="mb-3">
+            <label class="form-label">Nombre del negocio</label>
+            <input type="text" name="nombre" class="form-control" placeholder="Ej: Farmacia La Salud" required>
+        </div>
+
+        <!-- Datos del patrón -->
+        <div class="mb-3">
+            <label class="form-label">Datos del patrón / propietario</label>
+            <input type="text" name="patron" class="form-control" placeholder="Ej: Juan Pérez" required>
+        </div>
+
+        <!-- Usuario responsable -->
+        <div class="mb-3">
+            <label class="form-label">Usuario responsable</label>
+            <input type="text" name="usuario" class="form-control" placeholder="Ej: empleado1" required>
+        </div>
+
+        <!-- Descripción del negocio -->
+        <div class="mb-3">
+            <label class="form-label">Descripción del negocio</label>
+            <textarea name="descripcion" class="form-control" rows="3" placeholder="Breve descripción del negocio..."></textarea>
+        </div>
+
+        <!-- Botón de guardar -->
+        <button type="submit" class="btn btn-success w-100">💾 Guardar</button>
+    </form>
+</div>
+{% endblock %}

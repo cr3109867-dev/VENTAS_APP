@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS productos (
     qr_path TEXT
 );
 
--- Tabla inventario (si la mantienes como auxiliar)
+-- Tabla inventario (auxiliar, opcional)
 CREATE TABLE IF NOT EXISTS inventario (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     producto TEXT NOT NULL,
@@ -50,4 +50,37 @@ CREATE TABLE IF NOT EXISTS detalle_ventas (
     precio REAL NOT NULL,
     FOREIGN KEY (venta_id) REFERENCES ventas(id),
     FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+-- Tabla de negocios
+CREATE TABLE IF NOT EXISTS negocios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo TEXT NOT NULL,          -- Ej: farmacia, ferretería, mercado, ropa
+    nombre TEXT NOT NULL,        -- Nombre del negocio
+    patron TEXT,                 -- Datos del patrón/propietario
+    usuario TEXT,                -- Usuario responsable
+    descripcion TEXT,            -- Descripción del negocio
+    gmail TEXT                   -- Correo electrónico del negocio
+);
+
+-- Tabla de reportes programados
+CREATE TABLE IF NOT EXISTS reportes_programados (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    negocio TEXT NOT NULL,
+    frecuencia TEXT NOT NULL,        -- "diario", "semanal", "mensual"
+    hora TEXT NOT NULL,              -- formato HH:MM
+    destinatario TEXT NOT NULL,      -- correo principal
+    formato TEXT NOT NULL DEFAULT 'pdf', -- pdf, excel, ambos
+    tipo_reporte TEXT NOT NULL DEFAULT 'completo', -- completo, stock_bajo, proximos_vencer
+    cc TEXT,                         -- correo opcional para copia
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de reportes enviados (nuevo bloque)
+CREATE TABLE IF NOT EXISTS reportes_enviados (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    negocio TEXT NOT NULL,
+    reporte TEXT NOT NULL,
+    fecha_envio TEXT NOT NULL,
+    destinatario TEXT
 );

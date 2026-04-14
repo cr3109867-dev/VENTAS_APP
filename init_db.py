@@ -37,7 +37,7 @@ def init_db():
         precio REAL NOT NULL,
         cantidad INTEGER NOT NULL,
         proveedor TEXT,
-        negocio TEXT,
+        negocio TEXT NOT NULL,
         codigo_barras TEXT,
         fecha_vencimiento DATE,
         qr_path TEXT
@@ -67,22 +67,72 @@ def init_db():
     );
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS negocios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tipo TEXT NOT NULL,
+        nombre TEXT NOT NULL,
+        patron TEXT,
+        usuario TEXT,
+        descripcion TEXT,
+        gmail TEXT
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reportes_programados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        negocio TEXT NOT NULL,
+        frecuencia TEXT NOT NULL,        -- diario, semanal, mensual
+        hora TEXT NOT NULL,              -- formato HH:MM
+        destinatario TEXT NOT NULL,      -- correo principal
+        formato TEXT NOT NULL DEFAULT 'pdf', -- pdf, excel, ambos
+        tipo_reporte TEXT NOT NULL DEFAULT 'completo', -- completo, stock_bajo, proximos_vencer
+        cc TEXT,                         -- correo opcional para copia
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reportes_enviados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        negocio TEXT NOT NULL,
+        reporte TEXT NOT NULL,
+        fecha_envio TEXT NOT NULL,
+        destinatario TEXT
+    );
+    """)
+
     # ---------------------------
     # Datos de prueba garantizados
     # ---------------------------
-    # Admin por defecto con contraseña encriptada
     contraseña_hash = generate_password_hash("1234")
     cursor.execute("""
     INSERT OR REPLACE INTO usuarios (id, nombre, correo, contraseña, rol)
     VALUES (1, 'Admin', 'admin@test.com', ?, 'admin');
     """, (contraseña_hash,))
 
-    # Producto de prueba
     cursor.execute("""
     INSERT OR REPLACE INTO productos (
         id, nombre, cantidad, precio, categoria, proveedor, negocio, codigo_barras, fecha_vencimiento, qr_path
     ) VALUES (
         1, 'Producto Prueba', 10, 500, 'General', 'Proveedor Demo', 'DemoNegocio', '000111222', NULL, NULL
+    );
+    """)
+
+    cursor.execute("""
+    INSERT OR REPLACE INTO reportes_programados (
+        id, negocio, frecuencia, hora, destinatario, formato, tipo_reporte
+    ) VALUES (
+        1, 'DemoNegocio', 'diario', '08:00', 'admin@test.com', 'pdf', 'completo'
+    );
+    """)
+
+    cursor.execute("""
+    INSERT OR REPLACE INTO reportes_enviados (
+        id, negocio, reporte, fecha_envio, destinatario
+    ) VALUES (
+        1, 'DemoNegocio', 'Reporte inicial', datetime('now'), 'admin@test.com'
     );
     """)
 

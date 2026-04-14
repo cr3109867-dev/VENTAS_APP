@@ -11,6 +11,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import qrcode
 import os
 import time
+from apscheduler.schedulers.background import BackgroundScheduler
+from openpyxl import Workbook
+from fpdf import FPDF
+from email.mime.base import MIMEBase
+from email import encoders
+
+
+scheduler = BackgroundScheduler()
 
 
 app = Flask(__name__)
@@ -382,6 +390,144 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
+<<<<<<< HEAD
+=======
+#----------------------------
+#reportes programa
+#----------------------------
+import sqlite3
+from datetime import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
+
+def enviar_reportes_programados():
+    conn = sqlite3.connect("ventas_app.db")
+    conn.row_factory = sqlite3.Row
+    reportes = conn.execute("SELECT * FROM reportes_programados").fetchall()
+    conn.close()
+
+    current_time = datetime.now().strftime("%H:%M")
+    current_day = datetime.now().weekday()  # 0 = lunes, 6 = domingo
+    current_day_of_month = datetime.now().day
+
+    for r in reportes:
+        # Verificar si la hora coincide
+        if r["hora"] == current_time:
+            if r["frecuencia"] == "diario":
+                generar_y_enviar_reporte(r)
+            elif r["frecuencia"] == "semanal" and current_day == 0:  # lunes
+                generar_y_enviar_reporte(r)
+            elif r["frecuencia"] == "mensual" and current_day_of_month == 1:  # primer día del mes
+                generar_y_enviar_reporte(r)
+
+# Iniciar el scheduler en segundo plano
+scheduler = BackgroundScheduler()
+scheduler.add_job(enviar_reportes_programados, "interval", minutes=1)
+scheduler.start()
+
+#----------------------------
+#generar y enviar reporte
+#----------------------------
+def generar_y_enviar_reporte(r):
+    # 👉 Decidir formato del reporte (PDF por defecto, puedes ampliar a Excel o ambos)
+    formato = r["formato"] if "formato" in r.keys() else "pdf"
+
+    msg = MIMEMultipart()
+    msg["From"] = EMAIL
+    msg["To"] = r["destinatario"]
+    msg["Subject"] = "Reporte automático de inventario"
+
+    body = "Adjunto el reporte automático de inventario."
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        if formato == "pdf":
+            filename = f"reporte_{r['negocio']}.pdf"
+            ruta_archivo = exportar_inventario_pdf(r['negocio'], filename)
+
+            with open(ruta_archivo, "rb") as f:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(f.read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f"attachment; filename={filename}")
+                msg.attach(part)
+
+        elif formato == "excel":
+            filename = f"reporte_{r['negocio']}.xlsx"
+            ruta_archivo = exportar_inventario_excel(r['negocio'], filename)
+
+            with open(ruta_archivo, "rb") as f:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(f.read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f"attachment; filename={filename}")
+                msg.attach(part)
+
+        elif formato == "ambos":
+            # PDF
+            filename_pdf = f"reporte_{r['negocio']}.pdf"
+            ruta_pdf = exportar_inventario_pdf(r['negocio'], filename_pdf)
+            with open(ruta_pdf, "rb") as f:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(f.read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f"attachment; filename={filename_pdf}")
+                msg.attach(part)
+
+            # Excel
+            filename_excel = f"reporte_{r['negocio']}.xlsx"
+            ruta_excel = exportar_inventario_excel(r['negocio'], filename_excel)
+            with open(ruta_excel, "rb") as f:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(f.read())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f"attachment; filename={filename_excel}")
+                msg.attach(part)
+
+    except Exception as e:
+        print("❌ Error adjuntando archivo:", e)
+
+    # Enviar correo
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(EMAIL, PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        print("✅ Reporte enviado correctamente a", r["destinatario"])
+    except Exception as e:
+        print("❌ Error enviando correo:", e)
+
+#---------------------------
+# Exportar reporte PDF 
+#---------------------------
+def exportar_inventario_pdf(negocio, filename="inventario.pdf"):
+    # Ruta donde se guardará el archivo
+    carpeta_reportes = os.path.join("static", "reportes")
+    os.makedirs(carpeta_reportes, exist_ok=True)
+    ruta = os.path.join(carpeta_reportes, filename)
+
+    # 👉 Generar el PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt=f"Reporte de inventario - {negocio}", ln=True, align="C")
+
+    # Ejemplo: agregar productos desde la BD
+    conn = get_db_connection()
+    productos = conn.execute(
+        "SELECT nombre, cantidad FROM productos WHERE negocio=?", (negocio,)
+    ).fetchall()
+    conn.close()
+
+    for p in productos:
+        pdf.cell(200, 10, txt=f"{p['nombre']} - Stock: {p['cantidad']}", ln=True)
+
+    # Guardar el archivo en disco
+    pdf.output(ruta)
+
+    return ruta  # 👉 Devuelve la ruta del archivo generado
+
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
 
 # ---------------------------
 # Seleccionar negocio
@@ -581,6 +727,94 @@ def dashboard_tienda_de_ropa():
     )
 
 
+#----------------------------
+#formulario negocio
+#----------------------------
+@app.route("/formulario_negocio/<tipo>", methods=["GET", "POST"])
+def formulario_negocio(tipo):
+    if request.method == "POST":
+        # Capturar datos del formulario
+        nombre = request.form["nombre"]
+        patron = request.form["patron"]
+        usuario = request.form["usuario"]
+        descripcion = request.form["descripcion"]
+
+        # Guardar en la base de datos
+        conn = sqlite3.connect("ventas_app.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO negocios (tipo, nombre, patron, usuario, descripcion)
+            VALUES (?, ?, ?, ?, ?)
+        """, (tipo, nombre, patron, usuario, descripcion))
+        conn.commit()
+        conn.close()
+
+        # ✅ Guardar negocio actual en sesión
+        session["negocio_actual"] = tipo
+        session["negocio_nombre"] = nombre   # 👈 Guardamos el nombre real
+
+        flash("✅ Negocio registrado correctamente", "success")
+        # Redirigir al dashboard del negocio elegido
+        return redirect(url_for("dashboard", tipo=tipo))
+
+    # Renderizar el formulario
+    return render_template("formulario_negocio.html", tipo=tipo)
+
+
+# ---------------------------
+# DASHBOARD GENERAL
+# ---------------------------
+
+@app.route("/dashboard/<tipo>")
+def dashboard(tipo):
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+
+    # Buscar datos del negocio
+    cursor.execute("""
+        SELECT nombre, patron, usuario, descripcion 
+        FROM negocios 
+        WHERE tipo = ?
+    """, (tipo,))
+    negocio = cursor.fetchone()
+
+    # Buscar productos del negocio
+    cursor.execute("""
+        SELECT nombre, categoria, precio, cantidad 
+        FROM productos 
+        WHERE negocio = ?
+    """, (tipo,))
+    productos = cursor.fetchall()
+
+    # Buscar ventas del negocio
+    cursor.execute("""
+        SELECT fecha, cliente, total 
+        FROM ventas v
+        JOIN usuarios u ON v.usuario_id = u.id
+        WHERE u.negocio = ?
+    """, (tipo,))
+    ventas = cursor.fetchall()
+
+    conn.close()
+
+    if negocio:
+        nombre, patron, usuario, descripcion = negocio
+    else:
+        nombre, patron, usuario, descripcion = None, None, None, None
+
+    # ✅ Guardar también en sesión para usar en navbar y títulos
+    session["negocio_actual"] = tipo
+    session["negocio_nombre"] = nombre
+
+    return render_template("dashboard.html",
+                           tipo=tipo,
+                           nombre=nombre,
+                           patron=patron,
+                           usuario=usuario,
+                           descripcion=descripcion,
+                           productos=productos,
+                           ventas=ventas)
+
 # ---------------------------
 # USUARIOS (ADMIN)
 # ---------------------------
@@ -622,36 +856,259 @@ def cambiar_rol(id):
 # ---------------------------
 # INVENTARIO
 # ---------------------------
+<<<<<<< HEAD
 @app.route("/inventario")
 def inventario():
+=======
+from flask import render_template, session, redirect, url_for, flash
+
+
+@app.route("/inventario")
+def inventario():
+    """
+    Muestra el inventario filtrado por el negocio actual.
+    Incluye alertas de stock bajo, control de vencimiento, QR, gráficas,
+    la lista de reportes programados y conteo por categorías.
+    """
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
     negocio_actual = session.get("negocio")
 
     if not negocio_actual:
         flash("Debes seleccionar un negocio antes de ver el inventario.", "warning")
         return redirect(url_for("seleccionar_negocio"))
 
+<<<<<<< HEAD
     conn = None
+=======
+    # Capturar filtros desde la URL (GET)
+    categoria = request.args.get("categoria")
+    stock_bajo = request.args.get("stock_bajo")
+    proximos_vencer = request.args.get("proximos_vencer")
+
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
     try:
         conn = get_db_connection()
         query = "SELECT * FROM productos WHERE negocio = ?"
-        productos = conn.execute(query, (negocio_actual,)).fetchall()
+        params = [negocio_actual]
+
+        # Filtro por categoría
+        if categoria:
+            query += " AND categoria LIKE ?"
+            params.append(f"%{categoria}%")
+
+        productos = conn.execute(query, params).fetchall()
+
+        # Traer reportes programados del negocio (⚠️ corregido: ordena por id si no existe creado_en)
+        reportes_programados = conn.execute(
+            "SELECT * FROM reportes_programados WHERE negocio = ? ORDER BY id DESC",
+            (negocio_actual,)
+        ).fetchall()
+
+        # Traer historial de reportes enviados
+        reportes_enviados = conn.execute(
+            "SELECT * FROM reportes_enviados WHERE negocio = ? ORDER BY fecha_envio DESC",
+            (negocio_actual,)
+        ).fetchall()
+
     except Exception as e:
         flash(f"Error al cargar inventario: {str(e)}", "danger")
-        productos = []
+        productos, reportes_programados, reportes_enviados = [], [], []
     finally:
         if conn:
             conn.close()
 
     current_date = datetime.now().date()
 
+<<<<<<< HEAD
+=======
+    # Filtro adicional en memoria (stock bajo y próximos a vencer)
+    if stock_bajo:
+        productos = [p for p in productos if p["cantidad"] < 5]
+
+    if proximos_vencer:
+        filtrados = []
+        for p in productos:
+            if p["fecha_vencimiento"]:
+                try:
+                    fecha_venc = datetime.strptime(p["fecha_vencimiento"], "%Y-%m-%d").date()
+                    dias_restantes = (fecha_venc - current_date).days
+                    if dias_restantes < 30 and dias_restantes >= 0:
+                        filtrados.append(p)
+                except Exception:
+                    pass
+        productos = filtrados
+
+    # ---------------------------
+    # Alertas inteligentes
+    # ---------------------------
+    alertas_stock = [p for p in productos if p["cantidad"] < 5]
+    alertas_vencimiento = []
+    for p in productos:
+        if p["fecha_vencimiento"]:
+            try:
+                fecha_venc = datetime.strptime(p["fecha_vencimiento"], "%Y-%m-%d").date()
+                dias_restantes = (fecha_venc - current_date).days
+                if dias_restantes < 30 and dias_restantes >= 0:
+                    alertas_vencimiento.append(p)
+            except Exception:
+                pass
+
+    # ---------------------------
+    # Datos agregados para gráficas
+    # ---------------------------
+    categorias_count = {}
+    stock_bajo_count = len(alertas_stock)
+    proximos_vencer_count = len(alertas_vencimiento)
+
+    for p in productos:
+        # Conteo por categoría (sumando cantidades)
+        cat = p["categoria"] or "Sin categoría"
+        categorias_count[cat] = categorias_count.get(cat, 0) + p["cantidad"]
+
+    # ---------------------------
+    # Render final (solo uno)
+    # ---------------------------
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
     return render_template(
         "inventario.html",
-        productos=productos,
         negocio_actual=negocio_actual,
-        current_date=current_date
+        productos=productos,
+        categoria=categoria,
+        stock_bajo=stock_bajo,
+        proximos_vencer=proximos_vencer,
+        current_date=current_date,
+        alertas_stock=alertas_stock,
+        alertas_vencimiento=alertas_vencimiento,
+        reportes_programados=reportes_programados,
+        reportes_enviados=reportes_enviados,
+        categorias_count=categorias_count,
+        stock_bajo_count=stock_bajo_count,
+        proximos_vencer_count=proximos_vencer_count
     )
 
 
+<<<<<<< HEAD
+=======
+
+# ----------------------------
+# Programar reporte automático
+# ----------------------------
+@app.route("/programar_reporte", methods=["POST"])
+def programar_reporte():
+    negocio_actual = session.get("negocio")
+
+    if not negocio_actual:
+        flash("⚠️ Debes seleccionar un negocio antes de programar un reporte.", "warning")
+        return redirect(url_for("inventario"))
+
+    # Capturar datos del formulario
+    frecuencia = request.form.get("frecuencia")
+    hora = request.form.get("hora")
+    destinatario = request.form.get("destinatario")
+    formato = request.form.get("formato", "pdf")  # por defecto PDF
+    tipo_reporte = request.form.get("tipo_reporte", "completo")  # por defecto inventario completo
+    cc = request.form.get("cc")  # opcional
+
+    # Validaciones básicas
+    if not destinatario or not hora:
+        flash("⚠️ Debes ingresar un correo y una hora válidos.", "danger")
+        return redirect(url_for("inventario"))
+
+    # Guardar en la base de datos
+    conn = get_db_connection()
+    conn.execute("""
+        INSERT INTO reportes_programados 
+        (negocio, frecuencia, hora, destinatario, formato, tipo_reporte, cc)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (negocio_actual, frecuencia, hora, destinatario, formato, tipo_reporte, cc))
+    conn.commit()
+    conn.close()
+
+    flash("✅ Reporte programado correctamente", "success")
+    return redirect(url_for("inventario"))
+
+
+# ----------------------------
+# Eliminar reporte programado
+# ----------------------------
+@app.route("/eliminar_reporte/<int:id>", methods=["POST"])
+def eliminar_reporte(id):
+    negocio_actual = session.get("negocio")
+
+    if not negocio_actual:
+        flash("⚠️ Debes seleccionar un negocio antes de eliminar un reporte.", "warning")
+        return redirect(url_for("inventario"))
+
+    try:
+        conn = get_db_connection()
+        conn.execute("DELETE FROM reportes_programados WHERE id = ? AND negocio = ?", (id, negocio_actual))
+        conn.commit()
+        conn.close()
+        flash("🗑️ Reporte eliminado correctamente", "success")
+    except Exception as e:
+        flash(f"Error al eliminar reporte: {str(e)}", "danger")
+
+    return redirect(url_for("inventario"))
+
+
+# ----------------------------
+# Editar reporte programado
+# ----------------------------
+@app.route("/editar_reporte/<int:id>", methods=["POST"])
+def editar_reporte(id):
+    negocio_actual = session.get("negocio")
+
+    if not negocio_actual:
+        flash("⚠️ Debes seleccionar un negocio antes de editar un reporte.", "warning")
+        return redirect(url_for("inventario"))
+
+    # Capturar datos del formulario
+    frecuencia = request.form.get("frecuencia")
+    hora = request.form.get("hora")
+    destinatario = request.form.get("destinatario")
+    formato = request.form.get("formato", "pdf")
+    tipo_reporte = request.form.get("tipo_reporte", "completo")
+    cc = request.form.get("cc")
+
+    # Validaciones básicas
+    if not destinatario or not hora:
+        flash("⚠️ Debes ingresar un correo y una hora válidos.", "danger")
+        return redirect(url_for("inventario"))
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Verificar si el reporte existe
+        reporte = cursor.execute(
+            "SELECT * FROM reportes_programados WHERE id = ? AND negocio = ?",
+            (id, negocio_actual)
+        ).fetchone()
+
+        if not reporte:
+            conn.close()
+            flash("❌ El reporte que intentas editar ya no existe.", "danger")
+            return redirect(url_for("inventario"))
+
+        # Actualizar el reporte
+        cursor.execute("""
+            UPDATE reportes_programados
+            SET frecuencia = ?, hora = ?, destinatario = ?, formato = ?, tipo_reporte = ?, cc = ?
+            WHERE id = ? AND negocio = ?
+        """, (frecuencia, hora, destinatario, formato, tipo_reporte, cc, id, negocio_actual))
+
+        conn.commit()
+        conn.close()
+        flash("✏️ Reporte actualizado correctamente", "success")
+
+    except Exception as e:
+        flash(f"Error al actualizar reporte: {str(e)}", "danger")
+
+    return redirect(url_for("inventario"))
+
+
+
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
 # ---------------------------
 # REGISTRAR PRODUCTO (ADMIN)
 # ---------------------------
@@ -867,10 +1324,16 @@ def registrar_venta():
 # ---------------------------
 # Ver ventas
 # ---------------------------
-@app.route("/ventas")
+@app.route("/ventas", methods=["GET"])
 def ventas():
     conn = get_db_connection()
-    ventas = conn.execute("""
+
+    # Capturar filtros desde la URL (GET)
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+    cliente = request.args.get("cliente")
+
+    query = """
         SELECT v.id,
                v.fecha,
                v.cliente,
@@ -878,10 +1341,31 @@ def ventas():
                u.nombre AS vendedor
         FROM ventas v
         LEFT JOIN usuarios u ON v.usuario_id = u.id
-        ORDER BY v.fecha DESC
-    """).fetchall()
+        WHERE 1=1
+    """
+    params = []
+
+    # Aplicar filtros dinámicos
+    if fecha_inicio:
+        query += " AND v.fecha >= ?"
+        params.append(fecha_inicio)
+    if fecha_fin:
+        query += " AND v.fecha <= ?"
+        params.append(fecha_fin)
+    if cliente:
+        query += " AND v.cliente LIKE ?"
+        params.append(f"%{cliente}%")
+
+    query += " ORDER BY v.fecha DESC"
+
+    ventas = conn.execute(query, params).fetchall()
     conn.close()
-    return render_template("ventas.html", ventas=ventas)
+
+    return render_template("ventas.html",
+                           ventas=ventas,
+                           fecha_inicio=fecha_inicio,
+                           fecha_fin=fecha_fin,
+                           cliente=cliente)
 
 
 # ---------------------------
@@ -907,8 +1391,6 @@ def detalle_venta(venta_id):
 
     conn.close()
     return render_template("detalle_venta.html", venta=venta, detalle=detalle)
-
-
 # ---------------------------
 # Exportar ventas a Excel
 # ---------------------------
@@ -985,6 +1467,129 @@ def exportar_ventas_pdf():
     return send_file(filename, as_attachment=True)
 
 
+<<<<<<< HEAD
+=======
+#----------------------------
+# Exportar inventario a Excel con filtros
+#----------------------------
+@app.route("/inventario/export/excel")
+def exportar_inventario_excel():
+    import pandas as pd
+    negocio_actual = session.get("negocio")
+
+    if not negocio_actual:
+        flash("Debes seleccionar un negocio antes de exportar.", "warning")
+        return redirect(url_for("seleccionar_negocio"))
+
+    # Capturar filtros
+    categoria = request.args.get("categoria")
+    stock_bajo = request.args.get("stock_bajo")
+    proximos_vencer = request.args.get("proximos_vencer")
+
+    conn = get_db_connection()
+    query = """
+        SELECT nombre, categoria, precio, cantidad, proveedor, codigo_barras, fecha_vencimiento
+        FROM productos WHERE negocio = ?
+    """
+    params = [negocio_actual]
+
+    if categoria:
+        query += " AND categoria LIKE ?"
+        params.append(f"%{categoria}%")
+
+    productos = conn.execute(query, params).fetchall()
+    conn.close()
+
+    # Aplicar filtros en memoria
+    current_date = datetime.now().date()
+    if stock_bajo:
+        productos = [p for p in productos if p["cantidad"] < 5]
+    if proximos_vencer:
+        productos = [
+            p for p in productos
+            if p["fecha_vencimiento"] and
+               (datetime.strptime(p["fecha_vencimiento"], "%Y-%m-%d").date() - current_date).days < 30
+        ]
+
+    # Convertir a DataFrame con las 7 columnas seleccionadas
+    df = pd.DataFrame(productos, columns=[
+        "nombre","categoria","precio","cantidad","proveedor","codigo_barras","fecha_vencimiento"
+    ])
+    filename = "inventario_filtrado.xlsx"
+    df.to_excel(filename, index=False)
+
+    return send_file(filename, as_attachment=True)
+
+
+#----------------------------
+# Exportar inventario a PDF con filtros
+#----------------------------
+@app.route("/inventario/export/pdf")
+def exportar_inventario_pdf():
+    negocio_actual = session.get("negocio")
+
+    if not negocio_actual:
+        flash("Debes seleccionar un negocio antes de exportar.", "warning")
+        return redirect(url_for("seleccionar_negocio"))
+
+    # Capturar filtros
+    categoria = request.args.get("categoria")
+    stock_bajo = request.args.get("stock_bajo")
+    proximos_vencer = request.args.get("proximos_vencer")
+
+    conn = get_db_connection()
+    query = """
+        SELECT nombre, categoria, precio, cantidad, proveedor, codigo_barras, fecha_vencimiento
+        FROM productos WHERE negocio = ?
+    """
+    params = [negocio_actual]
+
+    if categoria:
+        query += " AND categoria LIKE ?"
+        params.append(f"%{categoria}%")
+
+    productos = conn.execute(query, params).fetchall()
+    conn.close()
+
+    # Aplicar filtros en memoria
+    current_date = datetime.now().date()
+    if stock_bajo:
+        productos = [p for p in productos if p["cantidad"] < 5]
+    if proximos_vencer:
+        productos = [
+            p for p in productos
+            if p["fecha_vencimiento"] and
+               (datetime.strptime(p["fecha_vencimiento"], "%Y-%m-%d").date() - current_date).days < 30
+        ]
+
+    # Crear PDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, f"Reporte de Inventario - {negocio_actual.capitalize()}", ln=True, align="C")
+
+    # Encabezados
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(200, 10, "Productos filtrados", ln=True)
+
+    # Filas
+    pdf.set_font("Arial", size=10)
+    for p in productos:
+        pdf.cell(
+            200, 8,
+            f"{p['nombre']} | Cat: {p['categoria']} | Precio: ${p['precio']:,.0f} | Stock: {p['cantidad']} | Prov: {p['proveedor']} | Código: {p['codigo_barras']} | Venc: {p['fecha_vencimiento']}",
+            ln=True
+        )
+
+    # Guardar archivo
+    filename = f"inventario_{negocio_actual}.pdf"
+    ruta = os.path.join("static", "reportes", filename)
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    pdf.output(ruta)
+
+    return send_file(ruta, as_attachment=True)
+
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
 # ---------------------------
 # Reporte
 # ---------------------------

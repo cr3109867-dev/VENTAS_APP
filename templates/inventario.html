@@ -1,4 +1,6 @@
-{% extends "base.html" %} {% block title %}Inventario{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Inventario{% endblock %}
+{% block content %}
 <div class="container mt-4">
     <!-- Encabezado -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -6,8 +8,30 @@
             📦 Inventario de {{ negocio_actual|capitalize }}
         </h2>
         {% if session.get("rol") == "admin" %}
-        <a href="{{ url_for('registrar_producto') }}" class="btn btn-success fw-bold shadow-sm">➕ Nuevo Producto</a> {% endif %}
+        <a href="{{ url_for('registrar_producto') }}" class="btn btn-success fw-bold shadow-sm">➕ Nuevo Producto</a>
+        {% endif %}
     </div>
+
+    <!-- FORMULARIO DE FILTROS -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="categoria" class="form-label">🏷️ Categoría</label>
+            <input type="text" id="categoria" name="categoria" class="form-control" value="{{ categoria }}">
+        </div>
+        <div class="col-md-4 d-flex align-items-center">
+            <div class="form-check me-3">
+                <input class="form-check-input" type="checkbox" id="stock_bajo" name="stock_bajo" {% if stock_bajo %}checked{% endif %}>
+                <label class="form-check-label" for="stock_bajo">⚠️ Solo stock bajo (&lt; 5)</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="proximos_vencer" name="proximos_vencer" {% if proximos_vencer %}checked{% endif %}>
+                <label class="form-check-label" for="proximos_vencer">📅 Próximos a vencer (&lt; 30 días)</label>
+            </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
 
     <!-- Buscador -->
     <div class="mb-3">
@@ -16,10 +40,33 @@
         <small class="text-muted">Use la pistola lectora para llenar este campo automáticamente.</small>
     </div>
 
+    <!-- BLOQUE DE ALERTAS -->
+    {% if alertas_stock or alertas_vencimiento %}
+    <div class="alert alert-warning shadow-sm">
+        <h5>🚨 Alertas de inventario</h5>
+        {% if alertas_stock %}
+            <p>⚠️ {{ alertas_stock|length }} productos con stock bajo:</p>
+            <ul>
+                {% for p in alertas_stock %}
+                    <li>{{ p.nombre }} (Stock: {{ p.cantidad }})</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if alertas_vencimiento %}
+            <p>📅 {{ alertas_vencimiento|length }} productos próximos a vencer:</p>
+            <ul>
+                {% for p in alertas_vencimiento %}
+                    <li>{{ p.nombre }} (Vence: {{ p.fecha_vencimiento }})</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Alert si no hay productos -->
     {% if productos|length == 0 %}
     <div class="alert alert-info text-center shadow-sm">
-        No hay productos registrados en {{ negocio_actual|capitalize }}
+        No hay productos registrados en {{ negocio_actual|capitalize }} con los filtros seleccionados
     </div>
     {% else %}
     <!-- Tabla -->
@@ -45,41 +92,243 @@
                     <td class="fw-bold text-success">${{ "{:,.0f}".format(producto.precio) }}</td>
                     <td>
                         {% if producto.cantidad == 0 %}
-                        <span class="badge bg-danger shadow-sm" data-bs-toggle="tooltip" title="Reordenar producto urgentemente">❌ Sin stock</span> {% elif producto.cantidad
-                        < 5 %} <span class="badge bg-warning text-dark shadow-sm" data-bs-toggle="tooltip"
-                            title="Últimas unidades disponibles, considera reabastecer">⚠️ Bajo ({{ producto.cantidad }})</span>
-                            {% else %}
-                            <span class="badge bg-success shadow-sm" data-bs-toggle="tooltip" title="Stock suficiente">✅ {{ producto.cantidad }}</span> {% endif %}
+                        <span class="badge bg-danger shadow-sm">❌ Sin stock</span>
+                        {% elif producto.cantidad < 5 %}
+                        <span class="badge bg-warning text-dark shadow-sm">⚠️ Bajo ({{ producto.cantidad }})</span>
+                        {% else %}
+                        <span class="badge bg-success shadow-sm">✅ {{ producto.cantidad }}</span>
+                        {% endif %}
                     </td>
                     <td>{{ producto.proveedor }}</td>
                     <td>{{ producto.codigo_barras }}</td>
                     <td>
-                        {% if producto.fecha_vencimiento %} {% set dias_restantes = (producto.fecha_vencimiento - current_date).days %} {% if dias_restantes
-                        < 0 %} <span class="badge bg-secondary shadow-sm">❌ Vencido ({{ producto.fecha_vencimiento }})</span>
-                            {% elif dias_restantes
-                            < 30 %} <span class="badge bg-danger shadow-sm">⚠️ Próximo a vencer ({{ producto.fecha_vencimiento }})</span>
-                                {% else %}
-                                <span class="badge bg-success shadow-sm">✅ {{ producto.fecha_vencimiento }}</span> {% endif %} {% else %}
-                                <span class="text-muted">—</span> {% endif %}
+                        {% if producto.fecha_vencimiento %}
+                            {% set dias_restantes = (producto.fecha_vencimiento - current_date).days %}
+                            {% if dias_restantes < 0 %}
+                                <span class="badge bg-secondary shadow-sm">❌ Vencido ({{ producto.fecha_vencimiento }})</span>
+                            {% elif dias_restantes < 30 %}
+                                <span class="badge bg-danger shadow-sm">⚠️ Próximo a vencer ({{ producto.fecha_vencimiento }})</span>
+                            {% else %}
+                                <span class="badge bg-success shadow-sm">✅ {{ producto.fecha_vencimiento }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
                     </td>
                     <td>
                         {% if session.get("rol") == "admin" %}
-                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm shadow-sm" data-bs-toggle="tooltip" title="Editar producto">✏️</a>
+                        <a href="{{ url_for('editar_producto', id=producto.id) }}" class="btn btn-outline-warning btn-sm shadow-sm">✏️</a>
                         <form method="POST" action="{{ url_for('eliminar_producto', id=producto.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este producto?')">
-                            <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm" data-bs-toggle="tooltip" title="Eliminar producto">🗑️</button>
+                            <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm">🗑️</button>
                         </form>
                         {% if producto.qr_path %}
-                        <a href="{{ url_for('static', filename=producto.qr_path) }}" target="_blank" class="btn btn-outline-info btn-sm shadow-sm" data-bs-toggle="tooltip" title="Ver QR">📱</a> {% endif %} {% else %}
-                        <span class="text-muted">🔒</span> {% endif %}
+                        <a href="{{ url_for('static', filename=producto.qr_path) }}" target="_blank" class="btn btn-outline-info btn-sm shadow-sm">📱</a>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-muted">🔒</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <!-- BOTONES DE EXPORTACIÓN CON FILTROS -->
+    <div class="mt-4">
+        <a href="{{ url_for('exportar_inventario_excel', categoria=categoria, stock_bajo=stock_bajo, proximos_vencer=proximos_vencer) }}" class="btn btn-outline-success">
+            📊 Exportar Inventario a Excel
+        </a>
+        <a href="{{ url_for('exportar_inventario_pdf', categoria=categoria, stock_bajo=stock_bajo, proximos_vencer=proximos_vencer) }}" class="btn btn-outline-danger">
+            📄 Exportar Inventario a PDF
+        </a>
+    </div>
+    
+    <!-- BOTÓN PARA PROGRAMAR REPORTE -->
+<div class="mt-4">
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#programarReporteModal">
+        ⏰ Programar reporte automático
+    </button>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="programarReporteModal" tabindex="-1" aria-labelledby="programarReporteLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('programar_reporte') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="programarReporteLabel">Programar reporte automático</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <label for="frecuencia" class="form-label">Frecuencia</label>
+          <select id="frecuencia" name="frecuencia" class="form-select">
+            <option value="diario">Diario</option>
+            <option value="semanal">Semanal</option>
+            <option value="mensual">Mensual</option>
+          </select>
+
+          <label for="hora" class="form-label mt-3">Hora de envío</label>
+          <input type="time" id="hora" name="hora" class="form-control" required>
+
+          <label for="destinatario" class="form-label mt-3">Correo destinatario</label>
+          <input type="email" id="destinatario" name="destinatario" class="form-control" required>
+
+          <label for="formato" class="form-label mt-3">Formato del reporte</label>
+          <select id="formato" name="formato" class="form-select">
+            <option value="pdf">PDF</option>
+            <option value="excel">Excel</option>
+            <option value="ambos">Ambos</option>
+          </select>
+
+          <!-- NUEVOS CAMPOS -->
+          <label for="tipo_reporte" class="form-label mt-3">Tipo de reporte</label>
+          <select id="tipo_reporte" name="tipo_reporte" class="form-select">
+            <option value="completo">Inventario completo</option>
+            <option value="stock_bajo">Solo stock bajo</option>
+            <option value="proximos_vencer">Próximos a vencer</option>
+          </select>
+
+          <label for="cc" class="form-label mt-3">Enviar copia a (CC)</label>
+          <input type="email" id="cc" name="cc" class="form-control">
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar programación</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reportes programados -->
+<div class="mt-5">
+    <h4>📅 Reportes programados</h4>
+    <table class="table table-bordered text-center shadow-sm">
+        <thead>
+            <tr>
+                <th>Frecuencia</th>
+                <th>Hora</th>
+                <th>Destinatario</th>
+                <th>Formato</th>
+                <th>Tipo de reporte</th>
+                <th>CC</th>
+                <th>Creado en</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reportes_programados %}
+            <tr>
+                <td>{{ r.frecuencia }}</td>
+                <td>{{ r.hora }}</td>
+                <td>{{ r.destinatario }}</td>
+                <td>{{ r.formato }}</td>
+                <td>{{ r.tipo_reporte }}</td>
+                <td>{{ r.cc if r.cc else "—" }}</td>
+                <td>{{ r.creado_en }}</td>
+                <td>
+                    <!-- Botón Editar -->
+                    <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editarReporteModal{{ r.id }}">
+                        ✏️ Editar
+                    </button>
+
+                    <!-- Botón Eliminar -->
+                    <form method="POST" action="{{ url_for('eliminar_reporte', id=r.id) }}" style="display:inline;" onsubmit="return confirm('¿Eliminar este reporte programado?')">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">🗑️ Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+
+            <!-- Modal Editar -->
+            <div class="modal fade" id="editarReporteModal{{ r.id }}" tabindex="-1" aria-labelledby="editarReporteLabel{{ r.id }}" aria-hidden="true">
+              <div class="modal-dialog">
+                <form method="POST" action="{{ url_for('editar_reporte', id=r.id) }}">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="editarReporteLabel{{ r.id }}">Editar reporte programado</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                      <label for="frecuencia{{ r.id }}" class="form-label">Frecuencia</label>
+                      <select id="frecuencia{{ r.id }}" name="frecuencia" class="form-select">
+                        <option value="diario" {% if r.frecuencia == 'diario' %}selected{% endif %}>Diario</option>
+                        <option value="semanal" {% if r.frecuencia == 'semanal' %}selected{% endif %}>Semanal</option>
+                        <option value="mensual" {% if r.frecuencia == 'mensual' %}selected{% endif %}>Mensual</option>
+                      </select>
+
+                      <label for="hora{{ r.id }}" class="form-label mt-3">Hora de envío</label>
+                      <input type="time" id="hora{{ r.id }}" name="hora" class="form-control" value="{{ r.hora }}" required>
+
+                      <label for="destinatario{{ r.id }}" class="form-label mt-3">Correo destinatario</label>
+                      <input type="email" id="destinatario{{ r.id }}" name="destinatario" class="form-control" value="{{ r.destinatario }}" required>
+
+                      <label for="formato{{ r.id }}" class="form-label mt-3">Formato del reporte</label>
+                      <select id="formato{{ r.id }}" name="formato" class="form-select">
+                        <option value="pdf" {% if r.formato == 'pdf' %}selected{% endif %}>PDF</option>
+                        <option value="excel" {% if r.formato == 'excel' %}selected{% endif %}>Excel</option>
+                        <option value="ambos" {% if r.formato == 'ambos' %}selected{% endif %}>Ambos</option>
+                      </select>
+
+                      <label for="tipo_reporte{{ r.id }}" class="form-label mt-3">Tipo de reporte</label>
+                      <select id="tipo_reporte{{ r.id }}" name="tipo_reporte" class="form-select">
+                        <option value="completo" {% if r.tipo_reporte == 'completo' %}selected{% endif %}>Inventario completo</option>
+                        <option value="stock_bajo" {% if r.tipo_reporte == 'stock_bajo' %}selected{% endif %}>Solo stock bajo</option>
+                        <option value="proximos_vencer" {% if r.tipo_reporte == 'proximos_vencer' %}selected{% endif %}>Próximos a vencer</option>
+                      </select>
+
+                      <label for="cc{{ r.id }}" class="form-label mt-3">Enviar copia a (CC)</label>
+                      <input type="email" id="cc{{ r.id }}" name="cc" class="form-control" value="{{ r.cc }}">
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h5>📊 Productos por categoría</h5>
+<ul>
+    {% for categoria, cantidad in categorias_count.items() %}
+        <li>{{ categoria }}: {{ cantidad }}</li>
+    {% endfor %}
+</ul>
+
+<h5>⚠️ Productos con stock bajo: {{ stock_bajo_count }}</h5>
+<ul>
+    {% for p in alertas_stock %}
+        <li>{{ p.nombre }} ({{ p.cantidad }} unidades)</li>
+    {% endfor %}
+</ul>
+
+<h5>⏳ Productos próximos a vencer: {{ proximos_vencer_count }}</h5>
+<ul>
+    {% for p in alertas_vencimiento %}
+        <li>{{ p.nombre }} (vence el {{ p.fecha_vencimiento }})</li>
+    {% endfor %}
+</ul>
+
+
+
+    <!-- GRÁFICAS -->
+    <div class="mt-5">
+        <h4>📊 Resumen gráfico</h4>
+        <canvas id="graficaCategorias" height="100"></canvas>
+        <canvas id="graficaStock" height="100" class="mt-4"></canvas>
+        <canvas id="graficaVencimiento" height="100" class="mt-4"></canvas>
+    </div>
     {% endif %}
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Buscador por código de barras
     document.getElementById("buscar_codigo").addEventListener("input", function() {
@@ -95,6 +344,47 @@
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
     var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    });
+
+    
+    // Gráfica por categorías
+    const ctxCat = document.getElementById('graficaCategorias').getContext('2d');
+    new Chart(ctxCat, {
+        type: 'bar',
+        data: {
+            labels: {{ categorias_count.keys()|list|tojson }},
+            datasets: [{
+                label: 'Stock por categoría',
+                data: {{ categorias_count.values()|list|tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            }]
+        }
+    });
+
+    // Gráfica stock bajo vs suficiente
+    const ctxStock = document.getElementById('graficaStock').getContext('2d');
+    new Chart(ctxStock, {
+        type: 'doughnut',
+        data: {
+            labels: ['Stock bajo (<5)', 'Stock suficiente'],
+            datasets: [{
+                data: [{{ stock_bajo_count }}, {{ productos|length - stock_bajo_count }}],
+                backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(75, 192, 192, 0.6)']
+            }]
+        }
+    });
+
+       // Gráfica productos próximos a vencer
+    const ctxVenc = document.getElementById('graficaVencimiento').getContext('2d');
+    new Chart(ctxVenc, {
+        type: 'pie',
+        data: {
+            labels: ['Próximos a vencer (<30 días)', 'Con vencimiento lejano'],
+            datasets: [{
+                data: [{{ proximos_vencer_count }}, {{ productos|length - proximos_vencer_count }}],
+                backgroundColor: ['rgba(255, 206, 86, 0.6)', 'rgba(153, 102, 255, 0.6)']
+            }]
+        }
+    });
 </script>
 {% endblock %}

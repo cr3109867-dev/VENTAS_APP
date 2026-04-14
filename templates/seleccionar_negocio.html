@@ -13,6 +13,7 @@
     <h4 class="mb-4">Seleccione el tipo de negocio</h4>
     {% endif %}
 
+<<<<<<< HEAD
     <form method="POST">
         <div class="row mt-4">
             <div class="col-md-3 mb-3">
@@ -102,6 +103,30 @@
         </div>
     </div>
     {% endif %}
+=======
+    <div class="row mt-4">
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('formulario_negocio', tipo='farmacia') }}" class="btn btn-primary btn-lg w-100">
+                💊 Farmacia
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('formulario_negocio', tipo='ferreteria') }}" class="btn btn-warning btn-lg w-100">
+                🛠️ Ferretería
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('formulario_negocio', tipo='mercado') }}" class="btn btn-success btn-lg w-100">
+                🛒 Mercado
+            </a>
+        </div>
+        <div class="col-md-3 mb-3">
+            <a href="{{ url_for('formulario_negocio', tipo='ropa') }}" class="btn btn-info btn-lg w-100">
+                🏬 Tienda de Ropa
+            </a>
+        </div>
+    </div>
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
 </div>
 {% endblock %}
 

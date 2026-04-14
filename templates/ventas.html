@@ -19,15 +19,34 @@
         </div>
     </div>
 
-    <!-- BUSCADOR -->
+    <!-- FORMULARIO DE FILTROS -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label for="fecha_inicio" class="form-label">📅 Fecha inicio</label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control" value="{{ fecha_inicio }}">
+        </div>
+        <div class="col-md-3">
+            <label for="fecha_fin" class="form-label">📅 Fecha fin</label>
+            <input type="date" id="fecha_fin" name="fecha_fin" class="form-control" value="{{ fecha_fin }}">
+        </div>
+        <div class="col-md-3">
+            <label for="cliente" class="form-label">👤 Cliente</label>
+            <input type="text" id="cliente" name="cliente" class="form-control" value="{{ cliente }}">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </form>
+
+    <!-- BUSCADOR EN TIEMPO REAL -->
     <div class="mb-3">
-        <input type="text" id="buscador" class="form-control" placeholder="🔍 Buscar por cliente...">
+        <input type="text" id="buscador" class="form-control" placeholder="🔍 Buscar en la tabla...">
     </div>
 
     {% if ventas|length == 0 %}
     <!-- ESTADO VACÍO -->
     <div class="alert alert-info text-center">
-        No hay ventas registradas
+        No hay ventas registradas con los filtros seleccionados
     </div>
     {% else %}
     <!-- TABLA -->

@@ -1,0 +1,78 @@
+{% extends "base.html" %} {% block title %}Dashboard {{ nombre }}{% endblock %} {% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">📊 Dashboard - {{ nombre }}</h2>
+
+    <!-- Información del negocio -->
+    {% if nombre %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">Información del negocio</div>
+        <div class="card-body">
+            <p><strong>Nombre:</strong> {{ nombre }}</p>
+            <p><strong>Patrón / Propietario:</strong> {{ patron }}</p>
+            <p><strong>Usuario responsable:</strong> {{ usuario }}</p>
+            <p><strong>Descripción:</strong> {{ descripcion }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Inventario -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">Inventario - {{ nombre }}</div>
+        <div class="card-body">
+            {% if productos %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in productos %}
+                    <tr>
+                        <td>{{ p[0] }}</td>
+                        <td>{{ p[1] }}</td>
+                        <td>${{ p[2] }}</td>
+                        <td>{{ p[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No hay productos registrados.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ventas -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">Ventas - {{ nombre }}</div>
+        <div class="card-body">
+            {% if ventas %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in ventas %}
+                    <tr>
+                        <td>{{ v[0] }}</td>
+                        <td>{{ v[1] }}</td>
+                        <td>${{ v[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No hay ventas registradas.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
