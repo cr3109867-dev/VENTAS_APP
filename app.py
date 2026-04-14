@@ -390,8 +390,7 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
-<<<<<<< HEAD
-=======
+
 #----------------------------
 #reportes programa
 #----------------------------
@@ -525,9 +524,7 @@ def exportar_inventario_pdf(negocio, filename="inventario.pdf"):
     # Guardar el archivo en disco
     pdf.output(ruta)
 
-    return ruta  # 👉 Devuelve la ruta del archivo generado
-
->>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
+    return ruta  
 
 # ---------------------------
 # Seleccionar negocio
@@ -856,12 +853,6 @@ def cambiar_rol(id):
 # ---------------------------
 # INVENTARIO
 # ---------------------------
-<<<<<<< HEAD
-@app.route("/inventario")
-def inventario():
-=======
-from flask import render_template, session, redirect, url_for, flash
-
 
 @app.route("/inventario")
 def inventario():
@@ -870,22 +861,19 @@ def inventario():
     Incluye alertas de stock bajo, control de vencimiento, QR, gráficas,
     la lista de reportes programados y conteo por categorías.
     """
->>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
     negocio_actual = session.get("negocio")
 
     if not negocio_actual:
         flash("Debes seleccionar un negocio antes de ver el inventario.", "warning")
         return redirect(url_for("seleccionar_negocio"))
 
-<<<<<<< HEAD
     conn = None
-=======
+
     # Capturar filtros desde la URL (GET)
     categoria = request.args.get("categoria")
     stock_bajo = request.args.get("stock_bajo")
     proximos_vencer = request.args.get("proximos_vencer")
 
->>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
     try:
         conn = get_db_connection()
         query = "SELECT * FROM productos WHERE negocio = ?"
@@ -919,8 +907,7 @@ def inventario():
 
     current_date = datetime.now().date()
 
-<<<<<<< HEAD
-=======
+
     # Filtro adicional en memoria (stock bajo y próximos a vencer)
     if stock_bajo:
         productos = [p for p in productos if p["cantidad"] < 5]
@@ -968,7 +955,6 @@ def inventario():
     # ---------------------------
     # Render final (solo uno)
     # ---------------------------
->>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
     return render_template(
         "inventario.html",
         negocio_actual=negocio_actual,
@@ -987,8 +973,7 @@ def inventario():
     )
 
 
-<<<<<<< HEAD
-=======
+
 
 # ----------------------------
 # Programar reporte automático
@@ -1107,8 +1092,6 @@ def editar_reporte(id):
     return redirect(url_for("inventario"))
 
 
-
->>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
 # ---------------------------
 # REGISTRAR PRODUCTO (ADMIN)
 # ---------------------------
@@ -1467,8 +1450,7 @@ def exportar_ventas_pdf():
     return send_file(filename, as_attachment=True)
 
 
-<<<<<<< HEAD
-=======
+
 #----------------------------
 # Exportar inventario a Excel con filtros
 #----------------------------
@@ -1589,7 +1571,7 @@ def exportar_inventario_pdf():
 
     return send_file(ruta, as_attachment=True)
 
->>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
+
 # ---------------------------
 # Reporte
 # ---------------------------
