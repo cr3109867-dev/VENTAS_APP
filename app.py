@@ -185,6 +185,15 @@ def inject_global_business_context():
     }
 
 
+def set_session_usuario(usuario, negocio=None, nombre_negocio=None):
+    session["usuario_id"] = usuario["id"]
+    session["usuario_nombre"] = usuario["nombre"]
+    session["rol"] = usuario["rol"] if usuario["rol"] else "usuario"
+    session["negocio"] = negocio or usuario.get("negocio")
+    session["negocio_actual"] = negocio or usuario.get("negocio")
+    session["negocio_nombre"] = nombre_negocio or usuario.get("nombre_negocio")
+
+
 # ---------------------------
 # EMAIL
 # ---------------------------
@@ -264,11 +273,15 @@ def login():
 
         if usuario and check_password_hash(usuario["contraseña"], contraseña):
             session.permanent = True
+
+            # ✅ Guardamos toda la información del usuario en la sesión
             session["usuario_id"] = usuario["id"]
             session["usuario_nombre"] = usuario["nombre"]
-            session["rol"] = usuario["rol"] if usuario["rol"] else "usuario"
+            session["correo"] = usuario["correo"]
+            session["rol"] = usuario["rol"]   # Aquí guardamos el rol (admin o usuario)
             session["negocio"] = usuario["negocio"]
 
+            # ✅ Enviar correo de notificación de login
             try:
                 html = render_template(
                     "emails/login_notification.html",
@@ -389,7 +402,6 @@ def reset_password(token):
 def logout():
     session.clear()
     return redirect(url_for("index"))
-
 
 #----------------------------
 #reportes programa
@@ -524,7 +536,8 @@ def exportar_inventario_pdf(negocio, filename="inventario.pdf"):
     # Guardar el archivo en disco
     pdf.output(ruta)
 
-    return ruta  
+    return ruta  # 👉 Devuelve la ruta del archivo generado
+
 
 # ---------------------------
 # Seleccionar negocio
@@ -536,8 +549,8 @@ def seleccionar_negocio():
 
     if request.method == "POST":
         negocio = request.form.get("negocio")
-        session["negocio"] = negocio
 
+        # Guardar negocio en la base de datos
         conn = get_db_connection()
         conn.execute(
             "UPDATE usuarios SET negocio=? WHERE id=?",
@@ -545,6 +558,18 @@ def seleccionar_negocio():
         )
         conn.commit()
         conn.close()
+
+        # ✅ Actualizar sesión con negocio elegido usando la función centralizada
+        set_session_usuario(
+            {
+                "id": session["usuario_id"],
+                "nombre": session["usuario_nombre"],
+                "rol": session["rol"],
+                "negocio": negocio
+            },
+            negocio,
+            None  # aquí podrías pasar el nombre real si lo tienes
+        )
 
         flash(f"Negocio cambiado a {negocio.capitalize()}", "success")
 
@@ -560,6 +585,7 @@ def seleccionar_negocio():
         negocio_actual=negocio_actual,
         mostrar_formulario=False
     )
+
 
 
 # ---------------------------
@@ -761,7 +787,6 @@ def formulario_negocio(tipo):
 # ---------------------------
 # DASHBOARD GENERAL
 # ---------------------------
-
 @app.route("/dashboard/<tipo>")
 def dashboard(tipo):
     conn = sqlite3.connect("ventas_app.db")
@@ -794,6 +819,7 @@ def dashboard(tipo):
 
     conn.close()
 
+    # Datos del negocio
     if negocio:
         nombre, patron, usuario, descripcion = negocio
     else:
@@ -803,6 +829,27 @@ def dashboard(tipo):
     session["negocio_actual"] = tipo
     session["negocio_nombre"] = nombre
 
+    # --- KPIs y gráficas ---
+    # Ganancias acumuladas
+    ganancias = sum(v[2] for v in ventas) if ventas else 0
+
+    # Stock por categoría
+    categorias = {}
+    for p in productos:
+        cat = p[1] or "Sin categoría"
+        categorias[cat] = categorias.get(cat, 0) + p[3]
+    categorias_labels = list(categorias.keys())
+    stock_values = list(categorias.values())
+
+    # Ventas por mes
+    ventas_por_mes = {}
+    for v in ventas:
+        fecha = datetime.strptime(v[0], "%Y-%m-%d").date()
+        mes = fecha.strftime("%b %Y")
+        ventas_por_mes[mes] = ventas_por_mes.get(mes, 0) + v[2]
+    meses_labels = list(ventas_por_mes.keys())
+    ventas_values = list(ventas_por_mes.values())
+
     return render_template("dashboard.html",
                            tipo=tipo,
                            nombre=nombre,
@@ -810,7 +857,12 @@ def dashboard(tipo):
                            usuario=usuario,
                            descripcion=descripcion,
                            productos=productos,
-                           ventas=ventas)
+                           ventas=ventas,
+                           ganancias=ganancias,
+                           categorias=categorias_labels,
+                           stock=stock_values,
+                           meses=meses_labels,
+                           ventas_mes=ventas_values)
 
 # ---------------------------
 # USUARIOS (ADMIN)
@@ -826,33 +878,225 @@ def usuarios():
 
     return render_template("usuarios.html", usuarios=usuarios)
 
+#---------------------------
+#usuarios
+#---------------------------
+@app.route("/crear_usuario", methods=["POST"])
+def crear_usuario():
+    # Solo admin puede crear usuarios
+    if session.get("rol") != "admin":
+        flash("Acceso denegado. Solo admin.", "danger")
+        return redirect(url_for("index"))
+
+    # Datos del formulario
+    nombre = request.form["nombre"]
+    correo = request.form["correo"]
+    contraseña = generate_password_hash(request.form["contraseña"])
+    rol = request.form["rol"]
+
+    # Guardar en la base de datos
+    conn = get_db_connection()
+    conn.execute("""
+        INSERT INTO usuarios (nombre, correo, contraseña, rol, negocio)
+        VALUES (?, ?, ?, ?, ?)
+    """, (nombre, correo, contraseña, rol, session.get("negocio_actual")))
+    conn.commit()
+    conn.close()
+
+    # ✅ Registrar acción en logs
+    registrar_log(session["usuario_nombre"], "Crear usuario", f"Usuario {nombre} ({rol}) creado")
+
+    flash(f"Usuario {nombre} creado correctamente", "success")
+    return redirect(url_for("usuarios"))
+
+
+#---------------------------
+#logs
+#---------------------------
+@app.route("/logs")
+def logs():
+    # Solo admin puede ver el historial
+    if session.get("rol") != "admin":
+        flash("Acceso denegado. Solo admin.", "danger")
+        return redirect(url_for("index"))
+
+    conn = get_db_connection()
+    registros = conn.execute("""
+        SELECT usuario, accion, detalle, fecha 
+        FROM logs 
+        ORDER BY fecha DESC
+    """).fetchall()
+    conn.close()
+
+    return render_template("logs.html", logs=registros)
+
+
+# ---------------------------
+# Exportar reporte
+# ---------------------------
+@app.route("/exportar_reporte", methods=["POST"])
+def exportar_reporte():
+    if not session.get("usuario_nombre"):
+        flash("Debes iniciar sesión", "danger")
+        return redirect(url_for("login"))
+
+    try:
+        tipo = request.form.get("tipo", "ventas")  # Puede ser ventas, inventario, etc.
+        fecha_inicio = request.form.get("fecha_inicio")
+        fecha_fin = request.form.get("fecha_fin")
+
+        # Aquí iría la lógica real de generación del reporte (PDF, Excel, CSV...)
+        # Por ahora lo dejamos como placeholder
+        # ejemplo: generar_reporte(tipo, fecha_inicio, fecha_fin)
+
+        # ✅ Registrar acción en logs
+        registrar_log(
+            session.get("usuario_nombre"),
+            "Exportar reporte",
+            f"Reporte de {tipo} generado desde {fecha_inicio} hasta {fecha_fin}"
+        )
+
+        flash(f"Reporte de {tipo} exportado correctamente.", "success")
+
+    except Exception as e:
+        flash(f"Error al exportar reporte: {str(e)}", "danger")
+
+    return redirect(url_for("reportes"))
+
+# ---------------------------
+# Panel de Administración
+# ---------------------------
+@app.route("/admin_dashboard")
+def admin_dashboard():
+    if session.get("rol") != "admin":
+        flash("Acceso denegado. Solo admin.", "danger")
+        return redirect(url_for("index"))
+
+    conn = get_db_connection()
+
+    # Últimos 5 logs
+    logs = conn.execute("""
+        SELECT usuario, accion, detalle, fecha 
+        FROM logs 
+        ORDER BY fecha DESC LIMIT 5
+    """).fetchall()
+
+    # Ventas del día
+    ventas_dia = conn.execute("""
+        SELECT SUM(total) as total_dia 
+        FROM ventas 
+        WHERE DATE(fecha) = DATE('now')
+    """).fetchone()["total_dia"] or 0
+
+    # Productos con stock bajo
+    productos_bajos = conn.execute("""
+        SELECT nombre, cantidad 
+        FROM productos 
+        WHERE cantidad < 5
+        ORDER BY cantidad ASC
+    """).fetchall()
+
+    # Ventas por mes (últimos 6 meses)
+    ventas_mes = conn.execute("""
+        SELECT strftime('%Y-%m', fecha) as mes, SUM(total) as total
+        FROM ventas
+        GROUP BY mes
+        ORDER BY mes DESC LIMIT 6
+    """).fetchall()
+
+    # Productos más vendidos (top 5)
+    productos_vendidos = conn.execute("""
+        SELECT p.nombre, SUM(dv.cantidad) as total_vendido
+        FROM detalle_ventas dv
+        JOIN productos p ON dv.producto_id = p.id
+        GROUP BY p.nombre
+        ORDER BY total_vendido DESC LIMIT 5
+    """).fetchall()
+
+    conn.close()
+
+    return render_template("admin_dashboard.html",
+                           logs=logs,
+                           ventas_dia=ventas_dia,
+                           productos_bajos=productos_bajos,
+                           ventas_mes=ventas_mes,
+                           productos_vendidos=productos_vendidos)
+
+
+# ---------------------------
+# Agregar producto
+# ---------------------------
+@app.route("/agregar_producto", methods=["POST"])
+def agregar_producto():
+    if not session.get("usuario_nombre"):
+        flash("Debes iniciar sesión", "danger")
+        return redirect(url_for("login"))
+
+    try:
+        nombre = request.form["nombre"]
+        precio = float(request.form["precio"])   # ✅ Convertir a número
+        stock = int(request.form["stock"])       # ✅ Convertir a número
+
+        conn = get_db_connection()
+        conn.execute(
+            "INSERT INTO productos (nombre, precio, cantidad) VALUES (?, ?, ?)",
+            (nombre, precio, stock)
+        )
+        conn.commit()
+        conn.close()
+
+        # ✅ Registrar acción en logs
+        registrar_log(
+            session["usuario_nombre"],
+            "Agregar producto",
+            f"Producto {nombre} agregado con stock {stock} y precio ${precio:,.2f}"
+        )
+
+        flash(f"Producto '{nombre}' agregado correctamente", "success")
+
+    except Exception as e:
+        flash(f"Error al agregar producto: {str(e)}", "danger")
+
+    return redirect(url_for("inventario"))
+
 
 # ---------------------------
 # CAMBIAR ROL
 # ---------------------------
 @app.route("/cambiar_rol/<int:id>")
 def cambiar_rol(id):
+    # ✅ Validar que solo el admin pueda cambiar roles
     if session.get("rol") != "admin":
+        flash("Acceso denegado. Solo admin.", "danger")
         return redirect(url_for("index"))
 
-    if id == session.get("usuario_id"):
+    conn = get_db_connection()
+    usuario = conn.execute("SELECT * FROM usuarios WHERE id = ?", (id,)).fetchone()
+
+    if not usuario:
+        flash("Usuario no encontrado", "danger")
+        conn.close()
         return redirect(url_for("usuarios"))
 
-    conn = get_db_connection()
-    usuario = conn.execute("SELECT rol FROM usuarios WHERE id=?", (id,)).fetchone()
-
+    # ✅ Cambiar rol (si era usuario pasa a admin, si era admin pasa a usuario)
     nuevo_rol = "admin" if usuario["rol"] == "usuario" else "usuario"
-
-    conn.execute("UPDATE usuarios SET rol=? WHERE id=?", (nuevo_rol, id))
+    conn.execute("UPDATE usuarios SET rol = ? WHERE id = ?", (nuevo_rol, id))
     conn.commit()
     conn.close()
 
+    # ✅ Registrar acción en logs para auditoría
+    registrar_log(session["usuario_nombre"], "Cambiar rol", f"Usuario {usuario['nombre']} ahora es {nuevo_rol}")
+
+    flash(f"Rol de {usuario['nombre']} cambiado a {nuevo_rol}", "success")
     return redirect(url_for("usuarios"))
+
 
 
 # ---------------------------
 # INVENTARIO
 # ---------------------------
+from flask import render_template, session, redirect, url_for, flash
+
 
 @app.route("/inventario")
 def inventario():
@@ -866,8 +1110,6 @@ def inventario():
     if not negocio_actual:
         flash("Debes seleccionar un negocio antes de ver el inventario.", "warning")
         return redirect(url_for("seleccionar_negocio"))
-
-    conn = None
 
     # Capturar filtros desde la URL (GET)
     categoria = request.args.get("categoria")
@@ -906,7 +1148,6 @@ def inventario():
             conn.close()
 
     current_date = datetime.now().date()
-
 
     # Filtro adicional en memoria (stock bajo y próximos a vencer)
     if stock_bajo:
@@ -971,7 +1212,6 @@ def inventario():
         stock_bajo_count=stock_bajo_count,
         proximos_vencer_count=proximos_vencer_count
     )
-
 
 
 
@@ -1092,6 +1332,7 @@ def editar_reporte(id):
     return redirect(url_for("inventario"))
 
 
+
 # ---------------------------
 # REGISTRAR PRODUCTO (ADMIN)
 # ---------------------------
@@ -1147,8 +1388,9 @@ def registrar_producto():
     return render_template("registrar_producto.html", negocio_actual=negocio_actual)
 
 
+
 # ---------------------------
-# EDITAR PRODUCTO
+# Editar producto
 # ---------------------------
 @app.route("/editar_producto/<int:id>", methods=["GET", "POST"])
 def editar_producto(id):
@@ -1178,6 +1420,7 @@ def editar_producto(id):
             codigo_barras = request.form.get("codigo_barras", "").strip()
             fecha_vencimiento = request.form.get("fecha_vencimiento") or None
 
+            # Generar QR
             qr_data = codigo_barras if codigo_barras else nombre
             qr_img = qrcode.make(qr_data)
             qr_folder = os.path.join("static", "qr")
@@ -1197,6 +1440,13 @@ def editar_producto(id):
                 ))
                 conn.commit()
 
+            # ✅ Registrar acción en logs
+            registrar_log(
+                session.get("usuario_nombre"),
+                "Editar producto",
+                f"Producto {nombre} actualizado con stock {cantidad}, precio ${precio:,.2f}, proveedor {proveedor}"
+            )
+
             flash(f"Producto '{nombre}' actualizado correctamente.", "success")
 
         except Exception as e:
@@ -1207,8 +1457,10 @@ def editar_producto(id):
     return render_template("editar_producto.html", producto=producto, negocio_actual=negocio_actual)
 
 
+
+
 # ---------------------------
-# ELIMINAR PRODUCTO (ADMIN)
+# Eliminar producto
 # ---------------------------
 @app.route("/eliminar_producto/<int:id>", methods=["POST"])
 def eliminar_producto(id):
@@ -1226,6 +1478,13 @@ def eliminar_producto(id):
 
             conn.execute("DELETE FROM productos WHERE id=?", (id,))
             conn.commit()
+
+        # ✅ Registrar acción en logs
+        registrar_log(
+            session.get("usuario_nombre"),
+            "Eliminar producto",
+            f"Producto {producto['nombre']} eliminado"
+        )
 
         flash(f"Producto '{producto['nombre']}' eliminado correctamente.", "success")
 
@@ -1291,6 +1550,14 @@ def registrar_venta():
                 )
 
             conn.commit()
+
+            # ✅ Registrar acción en logs
+            registrar_log(
+                session.get("usuario_nombre"),
+                "Registrar venta",
+                f"Venta #{venta_id} registrada por {cliente} con total ${total_venta:,.2f}"
+            )
+
             flash(f"Venta registrada con éxito. Total: ${total_venta:,.2f}", "success")
 
         except Exception as e:
@@ -1302,7 +1569,6 @@ def registrar_venta():
 
     conn.close()
     return render_template("registrar_venta.html", productos=productos)
-
 
 # ---------------------------
 # Ver ventas
@@ -1450,7 +1716,6 @@ def exportar_ventas_pdf():
     return send_file(filename, as_attachment=True)
 
 
-
 #----------------------------
 # Exportar inventario a Excel con filtros
 #----------------------------
@@ -1570,7 +1835,6 @@ def exportar_inventario_pdf():
     pdf.output(ruta)
 
     return send_file(ruta, as_attachment=True)
-
 
 # ---------------------------
 # Reporte

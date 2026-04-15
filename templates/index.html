@@ -1,5 +1,4 @@
 {% extends "base.html" %} {% block title %}Inicio{% endblock %} {% block content %}
-
 <div class="container mt-5">
     <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
         <div class="col-md-10">
@@ -10,6 +9,36 @@
                     <h1 class="fw-bold text-gradient">🚀 Bienvenido a Ventas App</h1>
                     <p class="fs-5 text-muted">La plataforma inteligente para gestionar tu negocio</p>
                 </div>
+
+                <!-- KPIs -->
+                {% if kpi_productos or kpi_ventas or kpi_ganancias %}
+                <div class="row text-center mb-5">
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white shadow-sm">
+                            <div class="card-body">
+                                <h6>Total productos</h6>
+                                <h3 class="fw-bold">{{ kpi_productos }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white shadow-sm">
+                            <div class="card-body">
+                                <h6>Total ventas</h6>
+                                <h3 class="fw-bold">{{ kpi_ventas }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white shadow-sm">
+                            <div class="card-body">
+                                <h6>Ganancias acumuladas</h6>
+                                <h3 class="fw-bold">${{ "{:,.0f}".format(kpi_ganancias) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- FEATURES -->
                 <div class="row text-center mb-4">
@@ -54,18 +83,11 @@
                 <div class="text-center mt-4">
                     <h4>Hola, {{ session["usuario_nombre"] }} 👋</h4>
                     <p class="mb-3">Accede directamente a tus módulos:</p>
-                    <a href="{{ url_for('inventario') }}" class="btn btn-info btn-lg me-2">
-                            📦 Inventario
-                        </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-success btn-lg me-2">
-                            💰 Ventas
-                        </a>
-                    <a href="{{ url_for('reporte') }}" class="btn btn-warning btn-lg me-2">
-                            📊 Reporte
-                        </a>
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg">
-                            🚪 Cerrar sesión
-                        </a>
+                    <a href="{{ url_for('inventario') }}" class="btn btn-info btn-lg me-2">📦 Inventario</a>
+                    <a href="{{ url_for('ventas') }}" class="btn btn-success btn-lg me-2">💰 Ventas</a>
+                    <a href="{{ url_for('reporte') }}" class="btn btn-warning btn-lg me-2">📊 Reporte</a>
+                    <a href="{{ url_for('dashboard', tipo=session['negocio_actual']) }}" class="btn btn-light btn-lg me-2">📈 Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg">🚪 Cerrar sesión</a>
                 </div>
                 {% else %}
                 <div class="text-center mt-4">
@@ -82,5 +104,4 @@
         </div>
     </div>
 </div>
-
 {% endblock %}

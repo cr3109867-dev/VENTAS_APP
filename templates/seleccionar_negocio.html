@@ -10,89 +10,6 @@
     <h4 class="mb-4">Seleccione el tipo de negocio</h4>
     {% endif %}
 
-    <form method="POST">
-        <div class="row mt-4">
-            <div class="col-md-3 mb-3">
-                <button type="submit" name="negocio" value="farmacia" class="btn btn-primary btn-lg w-100 negocio-select-btn">
-                    💊 Farmacia
-                </button>
-            </div>
-            <div class="col-md-3 mb-3">
-                <button type="submit" name="negocio" value="ferreteria" class="btn btn-warning btn-lg w-100 negocio-select-btn">
-                    🛠️ Ferretería
-                </button>
-            </div>
-            <div class="col-md-3 mb-3">
-                <button type="submit" name="negocio" value="mercado" class="btn btn-success btn-lg w-100 negocio-select-btn">
-                    🛒 Mercado
-                </button>
-            </div>
-            <div class="col-md-3 mb-3">
-                <button type="submit" name="negocio" value="tienda_de_ropa" class="btn btn-info btn-lg w-100 negocio-select-btn">
-                    🏬 Tienda de Ropa
-                </button>
-            </div>
-        </div>
-    </form>
-
-    {% if mostrar_formulario and negocio_actual %}
-    <div id="datos-usuario-form" class="datos-negocio-wrapper mt-5">
-        <div class="datos-negocio-card">
-            <div class="datos-negocio-header">
-                <h3 class="mb-2">
-                    <i class="fas fa-user-edit"></i> Datos del usuario
-                </h3>
-                <p class="mb-0">
-                    Completa la información del negocio seleccionado antes de entrar al dashboard.
-                </p>
-            </div>
-
-            <form method="POST" action="{{ url_for('guardar_datos_negocio') }}">
-                <div class="row g-3 mt-2">
-                    <div class="col-md-6">
-                        <label class="form-label">Nombre del negocio</label>
-                        <input type="text" name="nombre_negocio" class="form-control" value="{{ negocio_info.nombre if negocio_info else '' }}" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Jefe / Responsable</label>
-                        <input type="text" name="responsable" class="form-control" value="{{ negocio_info.propietario if negocio_info else '' }}" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Teléfono</label>
-                        <input type="text" name="telefono" class="form-control" value="{{ negocio_info.telefono if negocio_info else '' }}" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Correo</label>
-                        <input type="email" name="correo" class="form-control" value="{{ negocio_info.correo if negocio_info else '' }}" required>
-                    </div>
-
-                    <div class="col-md-8">
-                        <label class="form-label">Dirección</label>
-                        <input type="text" name="direccion" class="form-control" value="{{ negocio_info.direccion if negocio_info else '' }}" required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">NIT</label>
-                        <input type="text" name="nit" class="form-control" value="{{ negocio_info.nit if negocio_info else '' }}" required>
-                    </div>
-                </div>
-
-                <div class="mt-4 d-flex flex-wrap justify-content-center gap-3">
-                    <button type="submit" class="btn btn-success btn-lg px-4">
-                        <i class="fas fa-save"></i> Guardar y entrar al dashboard
-                    </button>
-
-                    <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-light btn-lg px-4">
-                        <i class="fas fa-rotate-left"></i> Volver a elegir
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-    {% endif %}
     <div class="row mt-4">
         <div class="col-md-3 mb-3">
             <a href="{{ url_for('formulario_negocio', tipo='farmacia') }}" class="btn btn-primary btn-lg w-100">
@@ -115,7 +32,6 @@
             </a>
         </div>
     </div>
-
 </div>
 {% endblock %} {% block scripts %} {% if mostrar_formulario %}
 <script>

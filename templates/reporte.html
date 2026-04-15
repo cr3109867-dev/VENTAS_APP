@@ -13,11 +13,11 @@
     <!-- FILTROS DE FECHA -->
     <form method="POST" class="row g-3 mb-4">
         <div class="col-auto">
-            <label for="fecha_inicio" class="form-label">Desde</label>
+            <label for="fecha_inicio" class="form-label">📅 Desde</label>
             <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ fecha_inicio }}">
         </div>
         <div class="col-auto">
-            <label for="fecha_fin" class="form-label">Hasta</label>
+            <label for="fecha_fin" class="form-label">📅 Hasta</label>
             <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ fecha_fin }}">
         </div>
         <div class="col-auto align-self-end">
@@ -85,7 +85,7 @@
             <div class="card-body">
                 <h5 class="mb-3">📋 Detalle de productos vendidos</h5>
                 <table class="table table-hover table-bordered align-middle text-center mb-0">
-                    <thead>
+                    <thead class="table-dark">
                         <tr>
                             <th>Producto</th>
                             <th>Cantidad Vendida</th>
@@ -112,7 +112,7 @@
             <div class="card-body">
                 <h5 class="mb-3">👥 Clientes más frecuentes</h5>
                 <table class="table table-hover table-bordered align-middle text-center mb-0">
-                    <thead>
+                    <thead class="table-dark">
                         <tr>
                             <th>Cliente</th>
                             <th>Compras</th>

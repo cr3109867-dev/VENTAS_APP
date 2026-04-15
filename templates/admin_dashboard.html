@@ -1,0 +1,114 @@
+{% extends "base.html" %} {% block title %}Panel de Administración{% endblock %} {% block content %}
+
+<div class="container mt-4">
+    <h2>📊 Panel de Administración</h2>
+
+    <!-- Ventas del día -->
+    <div class="alert alert-info mt-3">
+        <strong>Ventas del día:</strong> ${{ ventas_dia }}
+    </div>
+
+    <!-- Productos con stock bajo -->
+    <h4 class="mt-4">⚠️ Productos con stock bajo</h4>
+    {% if productos_bajos|length == 0 %}
+    <p>No hay productos con stock bajo.</p>
+    {% else %}
+    <ul class="list-group">
+        {% for p in productos_bajos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ p.nombre }}
+            <span class="badge bg-danger">{{ p.cantidad }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- Últimos logs -->
+    <h4 class="mt-4">📜 Últimas acciones</h4>
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered text-center align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Detalle</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.usuario }}</td>
+                    <td>{{ log.accion }}</td>
+                    <td>{{ log.detalle }}</td>
+                    <td>{{ log.fecha }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Gráfica de ventas por mes -->
+    <h4 class="mt-4">📈 Ventas por mes</h4>
+    <canvas id="ventasMesChart"></canvas>
+
+    <!-- Gráfica de productos más vendidos -->
+    <h4 class="mt-4">🏆 Productos más vendidos</h4>
+    <canvas id="productosVendidosChart"></canvas>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Ventas por mes
+    const ventasMesLabels = {
+        {
+            ventas_mes | map(attribute = 'mes') | list | tojson
+        }
+    };
+    const ventasMesData = {
+        {
+            ventas_mes | map(attribute = 'total') | list | tojson
+        }
+    };
+
+    new Chart(document.getElementById('ventasMesChart'), {
+        type: 'line',
+        data: {
+            labels: ventasMesLabels.reverse(),
+            datasets: [{
+                label: 'Ventas ($)',
+                data: ventasMesData.reverse(),
+                borderColor: 'blue',
+                backgroundColor: 'rgba(0, 0, 255, 0.2)',
+                fill: true
+            }]
+        }
+    });
+
+    // Productos más vendidos
+    const productosLabels = {
+        {
+            productos_vendidos | map(attribute = 'nombre') | list | tojson
+        }
+    };
+    const productosData = {
+        {
+            productos_vendidos | map(attribute = 'total_vendido') | list | tojson
+        }
+    };
+
+    new Chart(document.getElementById('productosVendidosChart'), {
+        type: 'bar',
+        data: {
+            labels: productosLabels,
+            datasets: [{
+                label: 'Cantidad vendida',
+                data: productosData,
+                backgroundColor: 'rgba(0, 128, 0, 0.6)'
+            }]
+        }
+    });
+</script>
+
+{% endblock %}

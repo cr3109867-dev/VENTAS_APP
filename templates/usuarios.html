@@ -9,6 +9,39 @@
         </span>
     </div>
 
+    <!-- Formulario para crear usuario (solo admin) -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+            ➕ Crear nuevo usuario
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('crear_usuario') }}">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="correo" class="form-label">Correo</label>
+                        <input type="email" name="correo" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="contraseña" class="form-label">Contraseña</label>
+                        <input type="password" name="contraseña" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="rol" class="form-label">Rol</label>
+                        <select name="rol" class="form-select" required>
+                            <option value="usuario">Usuario</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Crear usuario</button>
+            </form>
+        </div>
+    </div>
+
     {% if usuarios|length == 0 %}
     <div class="alert alert-info text-center">
         No hay usuarios registrados
@@ -30,7 +63,6 @@
             <tbody>
                 {% for u in usuarios %}
                 <tr>
-
                     <!-- Nombre -->
                     <td class="fw-semibold">{{ u.nombre }}</td>
 
@@ -40,30 +72,18 @@
                     <!-- Rol -->
                     <td>
                         {% if u.rol == "admin" %}
-                        <span class="badge bg-danger px-3 py-2">
-                                👑 Admin
-                            </span> {% else %}
-                        <span class="badge bg-secondary px-3 py-2">
-                                👤 Usuario
-                            </span> {% endif %}
+                        <span class="badge bg-danger px-3 py-2">👑 Admin</span> {% else %}
+                        <span class="badge bg-secondary px-3 py-2">👤 Usuario</span> {% endif %}
                     </td>
 
                     <!-- Acción -->
                     <td>
-
                         {% if u.id != session.get("usuario_id") %}
-
                         <a href="{{ url_for('cambiar_rol', id=u.id) }}" class="btn btn-outline-warning btn-sm" onclick="return confirm('¿Seguro que quieres cambiar el rol de este usuario?')">
-
-                                🔄 Cambiar Rol
-                            </a> {% else %}
-
-                        <span class="badge bg-info">
-                                🟢 Tú
-                            </span> {% endif %}
-
+                           🔄 Cambiar Rol
+                        </a> {% else %}
+                        <span class="badge bg-info">🟢 Tú</span> {% endif %}
                     </td>
-
                 </tr>
                 {% endfor %}
             </tbody>

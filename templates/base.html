@@ -13,157 +13,77 @@
 <body class="app-theme">
 
     <header>
-        <nav class="navbar navbar-expand-lg" style="background-color:#1c1c1c; box-shadow:0 2px 5px rgba(0,0,0,0.5);">
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#1c1c1c; box-shadow:0 2px 5px rgba(0,0,0,0.5);">
             <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center text-white fw-bold" href="{{ url_for('index') }}">
-                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Ventas App" height="35" class="me-2 align-middle"> Ventas App
+                <!-- Logo -->
+                <a class="navbar-brand d-flex align-items-center fw-bold" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Ventas App" height="35" class="me-2"> Ventas App
                 </a>
 
-
-
-                <!-- 🔗 NAV -->
-
+                <!-- Botones de navegación -->
                 <div class="ms-auto d-flex flex-wrap align-items-center gap-2">
+                    <!-- Inicio -->
                     <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-home"></i> Inicio
                     </a>
 
                     {% if session.get("usuario_nombre") %}
-
-
-                    <!-- Botones dinámicos según tipo de negocio -->
-                    {% if session.get("negocio") == "farmacia" %}
+                    <!-- Inventario -->
                     <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-pills"></i> Medicamentos
+                        <i class="fas fa-boxes"></i> Inventario
                     </a>
+
+                    <!-- Ventas -->
                     <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Farmacia
-                    </a>
-                    {% elif session.get("negocio") == "ferreteria" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-tools"></i> Materiales
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Ferretería
-                    </a>
-                    {% elif session.get("negocio") == "mercado" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-apple-alt"></i> Productos Mercado
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Mercado
-                    </a>
-                    {% elif session.get("negocio") == "tienda_de_ropa" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-boxes"></i> Inventario Tienda de Ropa
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Tienda de Ropa
-                    </a>
-                    {% endif %} bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial) {% if session.get("negocio") == "farmacia" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-pills"></i> Medicamentos
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Farmacia
+                        <i class="fas fa-cash-register"></i> Ventas
                     </a>
 
-                    {% elif session.get("negocio") == "ferreteria" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-tools"></i> Materiales
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Ferretería
+                    <!-- Reportes -->
+                    <a href="{{ url_for('reporte') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-chart-line"></i> Reportes
                     </a>
 
-                    {% elif session.get("negocio") == "mercado" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-apple-alt"></i> Productos Mercado
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Mercado
-                    </a>
-
-
-                    {% elif session.get("negocio") == "tienda_de_ropa" %}
-                    <a href="{{ url_for('inventario') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-boxes"></i> Inventario Tienda de Ropa
-                    </a>
-                    <a href="{{ url_for('ventas') }}" class="btn btn-outline-info btn-sm">
-                        <i class="fas fa-receipt"></i> Ventas Tienda de Ropa
-                    </a>
-                    {% endif %}
-
-                    <a href="{{ url_for('registrar_producto') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-plus-square"></i> Producto
-                    </a>
-
-                    <a href="{{ url_for('registrar_venta') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-cash-register"></i> Venta
-                    </a>
-
-                    <a href="{{ url_for('reporte') }}" class="btn btn-outline-warning btn-sm">
-                        <i class="fas fa-chart-line"></i> Reporte
-                    </a>
-
-                    {% if session.get("rol") == "admin" %}
-                    <a href="{{ url_for('usuarios') }}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-users"></i> Usuarios
-                    </a>
-                    {% endif %} {% if negocio_info %}
-                    <span class="badge bg-primary">
-                            Negocio: {{ negocio_info.nombre }}
-                        </span> {% if request.endpoint == "seleccionar_negocio" and session.get("negocio") %}
-                    <a href="#datos-usuario-form" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-user-edit"></i> Datos del usuario
-                    </a>
-                    {% endif %}
-
-                    <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-warning btn-sm">
-                        <i class="fas fa-sync-alt"></i> Cambiar negocio
-                    </a>
-                    {% endif %}
-
-                    <span class="badge bg-secondary">
-                            👤 {{ session['usuario_nombre'] }}
-                        </span>
-
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
-                        <i class="fas fa-sign-out-alt"></i> Salir
-                    </a>
-
-
+                    <!-- Usuarios (solo admin) -->
                     {% if session.get("rol") == "admin" %}
                     <a href="{{ url_for('usuarios') }}" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-users"></i> Usuarios
                     </a>
                     {% endif %}
 
-                    <!-- ✅ Badge dinámico con nombre del negocio -->
+                    <!-- Negocio actual -->
                     {% if session.get("negocio_nombre") %}
                     <span class="badge bg-primary">
-                                Negocio: {{ session['negocio_nombre'] }}
-                            </span>
+                            Negocio: {{ session['negocio_nombre'] }}
+                        </span>
                     <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-warning btn-sm">
                         <i class="fas fa-sync-alt"></i> Cambiar negocio
                     </a>
                     {% endif %}
 
-                    <!-- ✅ Botón de acceso rápido al dashboard -->
+                    <!-- Dashboard -->
                     {% if session.get("negocio_actual") %}
                     <a href="{{ url_for('dashboard', tipo=session['negocio_actual']) }}" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-building"></i> Dashboard
                     </a>
                     {% endif %}
 
+                    <!-- Usuario actual -->
                     <span class="badge bg-secondary">
                             👤 {{ session['usuario_nombre'] }}
-                        </span>
+                        </span> {% if session.get("rol") == "admin" %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logs') }}">
+                            <i class="fas fa-history"></i> Historial
+                        </a>
+                    </li>
+                    {% endif %}
 
+                    <!-- Logout -->
                     <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
                         <i class="fas fa-sign-out-alt"></i> Salir
                     </a>
                     {% else %}
+                    <!-- Login / Registro -->
                     <a href="{{ url_for('login') }}" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-sign-in-alt"></i> Login
                     </a>
@@ -176,6 +96,7 @@
         </nav>
     </header>
 
+    <!-- Contenido principal -->
     <main class="container app-main mt-4 mb-5">
         {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
@@ -185,14 +106,15 @@
         {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
     </main>
 
+    <!-- Footer -->
     <footer class="text-center text-light py-2">
         © 2026 Ventas App - Desarrollado por Cristian
     </footer>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     {% block scripts %}{% endblock %}
 </body>
 
-</html>s
+</html>

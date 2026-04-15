@@ -1,0 +1,36 @@
+{% extends "base.html" %} {% block title %}Historial de Actividades{% endblock %} {% block content %}
+
+<div class="container mt-4">
+    <h2>📜 Historial de Actividades</h2>
+
+    {% if logs|length == 0 %}
+    <div class="alert alert-info text-center">
+        No hay registros en el historial
+    </div>
+    {% else %}
+    <div class="table-responsive shadow rounded mt-3">
+        <table class="table table-hover table-bordered text-center align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>👤 Usuario</th>
+                    <th>⚡ Acción</th>
+                    <th>📝 Detalle</th>
+                    <th>⏰ Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="fw-semibold">{{ log.usuario }}</td>
+                    <td>{{ log.accion }}</td>
+                    <td>{{ log.detalle }}</td>
+                    <td>{{ log.fecha }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

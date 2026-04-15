@@ -38,6 +38,16 @@
         </div>
     </form>
 
+    <!-- BOTONES DE EXPORTACIÓN -->
+    <div class="mb-3">
+        <a href="{{ url_for('exportar_ventas_pdf') }}" class="btn btn-danger">
+            📄 Exportar Ventas PDF
+        </a>
+        <a href="{{ url_for('exportar_ventas_excel') }}" class="btn btn-success">
+            📊 Exportar Ventas Excel
+        </a>
+    </div>
+
     <!-- BUSCADOR EN TIEMPO REAL -->
     <div class="mb-3">
         <input type="text" id="buscador" class="form-control" placeholder="🔍 Buscar en la tabla...">
@@ -85,8 +95,8 @@
     {% endif %}
 </div>
 
-<!-- BOTONES DE EXPORTACIÓN -->
-<div class="mb-4">
+<!-- BOTONES DE EXPORTACIÓN ABAJO -->
+<div class="mb-4 text-center">
     <a href="{{ url_for('exportar_ventas_excel') }}" class="btn btn-outline-success">
         📊 Exportar a Excel
     </a>
