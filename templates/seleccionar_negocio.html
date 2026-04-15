@@ -1,4 +1,7 @@
-{% extends "base.html" %} {% block title %}Seleccionar negocio{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Seleccionar negocio{% endblock %}
+
+{% block content %}
 <div class="container text-center mt-4">
 
     {% if negocio_actual %}
@@ -10,7 +13,7 @@
     <h4 class="mb-4">Seleccione el tipo de negocio</h4>
     {% endif %}
 
-
+<<<<<<< HEAD
     <form method="POST">
         <div class="row mt-4">
             <div class="col-md-3 mb-3">
@@ -52,32 +55,38 @@
                 <div class="row g-3 mt-2">
                     <div class="col-md-6">
                         <label class="form-label">Nombre del negocio</label>
-                        <input type="text" name="nombre_negocio" class="form-control" value="{{ negocio_info.nombre if negocio_info else '' }}" required>
+                        <input type="text" name="nombre_negocio" class="form-control"
+                               value="{{ negocio_info.nombre if negocio_info else '' }}" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label">Jefe / Responsable</label>
-                        <input type="text" name="responsable" class="form-control" value="{{ negocio_info.propietario if negocio_info else '' }}" required>
+                        <input type="text" name="responsable" class="form-control"
+                               value="{{ negocio_info.propietario if negocio_info else '' }}" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label">Teléfono</label>
-                        <input type="text" name="telefono" class="form-control" value="{{ negocio_info.telefono if negocio_info else '' }}" required>
+                        <input type="text" name="telefono" class="form-control"
+                               value="{{ negocio_info.telefono if negocio_info else '' }}" required>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label">Correo</label>
-                        <input type="email" name="correo" class="form-control" value="{{ negocio_info.correo if negocio_info else '' }}" required>
+                        <input type="email" name="correo" class="form-control"
+                               value="{{ negocio_info.correo if negocio_info else '' }}" required>
                     </div>
 
                     <div class="col-md-8">
                         <label class="form-label">Dirección</label>
-                        <input type="text" name="direccion" class="form-control" value="{{ negocio_info.direccion if negocio_info else '' }}" required>
+                        <input type="text" name="direccion" class="form-control"
+                               value="{{ negocio_info.direccion if negocio_info else '' }}" required>
                     </div>
 
                     <div class="col-md-4">
                         <label class="form-label">NIT</label>
-                        <input type="text" name="nit" class="form-control" value="{{ negocio_info.nit if negocio_info else '' }}" required>
+                        <input type="text" name="nit" class="form-control"
+                               value="{{ negocio_info.nit if negocio_info else '' }}" required>
                     </div>
                 </div>
 
@@ -94,7 +103,7 @@
         </div>
     </div>
     {% endif %}
-
+=======
     <div class="row mt-4">
         <div class="col-md-3 mb-3">
             <a href="{{ url_for('formulario_negocio', tipo='farmacia') }}" class="btn btn-primary btn-lg w-100">
@@ -117,18 +126,19 @@
             </a>
         </div>
     </div>
-
+>>>>>>> bc29d86 (Proyecto Ventas App con requirements.txt y base de datos inicial)
 </div>
-{% endblock %} {% block scripts %} {% if mostrar_formulario %}
+{% endblock %}
+
+{% block scripts %}
+{% if mostrar_formulario %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const section = document.getElementById("datos-usuario-form");
-        if (section) {
-            section.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-        }
-    });
+document.addEventListener("DOMContentLoaded", function () {
+    const section = document.getElementById("datos-usuario-form");
+    if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+});
 </script>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}
