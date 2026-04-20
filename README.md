@@ -1,7 +1,20 @@
 # VENTAS_APP
 
-Sistema de ventas desarrollado con **Flask** y **SQLite**, pensado para la gestión de inventarios, ventas y reportes.  
-Incluye autenticación de usuarios, manejo de productos, generación de reportes con gráficas y exportación de datos.
+## 🚀 Descripción
+
+Sistema web de **facturación y gestión empresarial** desarrollado en **Flask + SQLite**, con panel de control profesional que incluye:
+
+- Registro y listado de facturas.
+- Acciones: **Ver PDF, Anular, Pagar**.
+- Filtros avanzados por fecha, cliente y estado.
+- Exportación de reportes en **PDF y Excel**.
+- Dashboard con **KPIs ejecutivos** y **gráficas dinámicas** (Chart.js):
+  - Distribución de estados (pastel).
+  - Total facturado (barra).
+  - Evolución mensual (línea).
+  - Top 5 clientes (barra horizontal).
+
+Ideal para pequeñas y medianas empresas que buscan un sistema **modular, escalable y vendible**.
 
 ---
 

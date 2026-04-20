@@ -3,7 +3,7 @@
 <div class="container mt-4">
     <h2>📜 Historial de Actividades</h2>
 
-    {% if logs|length == 0 %}
+    {% if registros|length == 0 %}
     <div class="alert alert-info text-center">
         No hay registros en el historial
     </div>
@@ -15,16 +15,18 @@
                     <th>👤 Usuario</th>
                     <th>⚡ Acción</th>
                     <th>📝 Detalle</th>
+                    <th>🏢 Negocio</th>
                     <th>⏰ Fecha</th>
                 </tr>
             </thead>
             <tbody>
-                {% for log in logs %}
+                {% for r in registros %}
                 <tr>
-                    <td class="fw-semibold">{{ log.usuario }}</td>
-                    <td>{{ log.accion }}</td>
-                    <td>{{ log.detalle }}</td>
-                    <td>{{ log.fecha }}</td>
+                    <td class="fw-semibold">{{ r[1] }}</td>
+                    <td>{{ r[2] }}</td>
+                    <td>{{ r[3] }}</td>
+                    <td>{{ r[4] }}</td>
+                    <td>{{ r[0] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

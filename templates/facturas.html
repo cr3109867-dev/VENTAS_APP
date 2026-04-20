@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Facturas Emitidas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h2 { text-align: center; }
+        .kpis { display: flex; justify-content: space-around; margin: 20px 0; }
+        .kpi { border: 1px solid #333; padding: 15px; border-radius: 8px; background: #f9f9f9; width: 20%; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        a { text-decoration: none; color: blue; margin: 0 5px; }
+        form { margin-bottom: 20px; }
+        .charts { display: flex; flex-wrap: wrap; justify-content: space-around; margin-top: 30px; }
+        canvas { max-width: 400px; margin: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Facturas Emitidas</h2>
+
+    <!-- KPIs -->
+    <div class="kpis">
+        <div class="kpi"><h3>Emitidas</h3><p>{{ emitidas }}</p></div>
+        <div class="kpi"><h3>Anuladas</h3><p>{{ anuladas }}</p></div>
+        <div class="kpi"><h3>Pagadas</h3><p>{{ pagadas }}</p></div>
+        <div class="kpi"><h3>Total Pagado</h3><p>${{ "%.2f"|format(total_pagado) }}</p></div>
+    </div>
+
+    <!-- Gráficas -->
+    <div class="charts">
+        <canvas id="estadoChart"></canvas>
+        <canvas id="totalChart"></canvas>
+        <canvas id="evolucionChart"></canvas>
+        <canvas id="clientesChart"></canvas>
+    </div>
+
+    <script>
+        // Gráfico de estados (pastel)
+        new Chart(document.getElementById('estadoChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Emitidas', 'Anuladas', 'Pagadas'],
+                datasets: [{
+                    data: [{{ emitidas }}, {{ anuladas }}, {{ pagadas }}],
+                    backgroundColor: ['#3498db', '#e74c3c', '#2ecc71']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // Gráfico de total pagado (barra)
+        new Chart(document.getElementById('totalChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Total Pagado'],
+                datasets: [{
+                    label: 'Valor en $',
+                    data: [{{ total_pagado }}],
+                    backgroundColor: '#2ecc71'
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        // Gráfico de evolución mensual (línea)
+        new Chart(document.getElementById('evolucionChart'), {
+            type: 'line',
+            data: {
+                labels: {{ meses|tojson }},
+                datasets: [{
+                    label: 'Total facturado por mes',
+                    data: {{ totales_mes|tojson }},
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52,152,219,0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+
+        // Gráfico Top 5 clientes (barra horizontal)
+        new Chart(document.getElementById('clientesChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ clientes|tojson }},
+                datasets: [{
+                    label: 'Total facturado por cliente',
+                    data: {{ totales_clientes|tojson }},
+                    backgroundColor: '#9b59b6'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                scales: { x: { beginAtZero: true } }
+            }
+        });
+    </script>
+
+    <!-- Formulario de filtros -->
+    <form method="POST" action="{{ url_for('filtrar_facturas') }}">
+        <label>Fecha inicio:</label>
+        <input type="date" name="fecha_inicio">
+        <label>Fecha fin:</label>
+        <input type="date" name="fecha_fin">
+        <label>Cliente:</label>
+        <input type="text" name="cliente" placeholder="Nombre cliente">
+        <label>Estado:</label>
+        <select name="estado">
+            <option value="todos">Todos</option>
+            <option value="emitida">Emitida</option>
+            <option value="anulada">Anulada</option>
+            <option value="pagada">Pagada</option>
+        </select>
+        <button type="submit">Filtrar</button>
+    </form>
+
+    <!-- Botones de exportación -->
+    <a href="{{ url_for('exportar_facturas_pdf') }}">Exportar PDF</a>
+    <a href="{{ url_for('exportar_facturas_excel') }}">Exportar Excel</a>
+
+    <!-- Tabla de facturas -->
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Número</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in facturas %}
+            <tr>
+                <td>{{ f[0] }}</td>
+                <td>{{ f[1] }}</td>
+                <td>{{ f[2] }}</td>
+                <td>{{ f[3] }}</td>
+                <td>${{ "%.2f"|format(f[4]) }}</td>
+                <td>{{ f[5] }}</td>
+                <td>
+                    <a href="{{ url_for('generar_factura', venta_id=f[0]) }}">Ver PDF</a>
+                    <a href="{{ url_for('anular_factura', id=f[0]) }}">Anular</a>
+                    <a href="{{ url_for('pagar_factura', id=f[0]) }}">Pagar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

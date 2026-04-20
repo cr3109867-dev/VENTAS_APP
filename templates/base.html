@@ -53,8 +53,8 @@
                     <!-- Negocio actual -->
                     {% if session.get("negocio_nombre") %}
                     <span class="badge bg-primary">
-                            Negocio: {{ session['negocio_nombre'] }}
-                        </span>
+                        Negocio: {{ session['negocio_nombre'] }}
+                    </span>
                     <a href="{{ url_for('seleccionar_negocio') }}" class="btn btn-outline-warning btn-sm">
                         <i class="fas fa-sync-alt"></i> Cambiar negocio
                     </a>
@@ -69,13 +69,14 @@
 
                     <!-- Usuario actual -->
                     <span class="badge bg-secondary">
-                            👤 {{ session['usuario_nombre'] }}
-                        </span> {% if session.get("rol") == "admin" %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logs') }}">
-                            <i class="fas fa-history"></i> Historial
-                        </a>
-                    </li>
+                        👤 {{ session['usuario_nombre'] }}
+                    </span>
+
+                    <!-- Historial (solo admin) -->
+                    {% if session.get("rol") == "admin" %}
+                    <a href="{{ url_for('logs') }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-history"></i> Historial
+                    </a>
                     {% endif %}
 
                     <!-- Logout -->

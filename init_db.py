@@ -6,7 +6,7 @@ def init_db():
     cursor = conn.cursor()
 
     # ---------------------------
-    # Crear tablas
+    # Tablas principales
     # ---------------------------
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -21,11 +21,32 @@ def init_db():
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS inventario (
+    CREATE TABLE IF NOT EXISTS negocios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        producto TEXT NOT NULL,
-        precio REAL NOT NULL,
-        stock INTEGER NOT NULL
+        tipo TEXT NOT NULL,
+        nombre TEXT NOT NULL,
+        patron TEXT,
+        usuario TEXT,
+        descripcion TEXT,
+        gmail TEXT
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS negocio (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        descripcion TEXT
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS datos_negocio (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        negocio TEXT NOT NULL,
+        direccion TEXT,
+        telefono TEXT,
+        nit TEXT
     );
     """)
 
@@ -41,6 +62,15 @@ def init_db():
         codigo_barras TEXT,
         fecha_vencimiento DATE,
         qr_path TEXT
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS inventario (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        producto TEXT NOT NULL,
+        precio REAL NOT NULL,
+        stock INTEGER NOT NULL
     );
     """)
 
@@ -68,14 +98,24 @@ def init_db():
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS negocios (
+    CREATE TABLE IF NOT EXISTS facturas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tipo TEXT NOT NULL,
-        nombre TEXT NOT NULL,
-        patron TEXT,
-        usuario TEXT,
-        descripcion TEXT,
-        gmail TEXT
+        numero TEXT NOT NULL,
+        fecha TEXT NOT NULL,
+        cliente TEXT NOT NULL,
+        total REAL NOT NULL,
+        estado TEXT DEFAULT 'emitida'
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fecha TEXT NOT NULL,
+        usuario TEXT NOT NULL,
+        accion TEXT NOT NULL,
+        detalle TEXT,
+        negocio TEXT
     );
     """)
 
@@ -83,12 +123,12 @@ def init_db():
     CREATE TABLE IF NOT EXISTS reportes_programados (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         negocio TEXT NOT NULL,
-        frecuencia TEXT NOT NULL,        -- diario, semanal, mensual
-        hora TEXT NOT NULL,              -- formato HH:MM
-        destinatario TEXT NOT NULL,      -- correo principal
-        formato TEXT NOT NULL DEFAULT 'pdf', -- pdf, excel, ambos
-        tipo_reporte TEXT NOT NULL DEFAULT 'completo', -- completo, stock_bajo, proximos_vencer
-        cc TEXT,                         -- correo opcional para copia
+        frecuencia TEXT NOT NULL,
+        hora TEXT NOT NULL,
+        destinatario TEXT NOT NULL,
+        formato TEXT NOT NULL DEFAULT 'pdf',
+        tipo_reporte TEXT NOT NULL DEFAULT 'completo',
+        cc TEXT,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
@@ -114,9 +154,9 @@ def init_db():
 
     cursor.execute("""
     INSERT OR REPLACE INTO productos (
-        id, nombre, cantidad, precio, categoria, proveedor, negocio, codigo_barras, fecha_vencimiento, qr_path
+        id, nombre, cantidad, precio, categoria, proveedor, negocio, codigo_barras
     ) VALUES (
-        1, 'Producto Prueba', 10, 500, 'General', 'Proveedor Demo', 'DemoNegocio', '000111222', NULL, NULL
+        1, 'Producto Prueba', 10, 500, 'General', 'Proveedor Demo', 'DemoNegocio', '000111222'
     );
     """)
 

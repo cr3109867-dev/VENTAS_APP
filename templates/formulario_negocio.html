@@ -2,7 +2,19 @@
 <div class="container mt-5">
     <h2 class="mb-4">📋 Registrar {{ tipo|capitalize }}</h2>
 
-    <form method="POST">
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
+
+    <!-- Formulario -->
+    <form method="POST" action="{{ url_for('registro_negocio', tipo=tipo) }}">
+        <!-- Campo oculto para enviar el tipo -->
+        <input type="hidden" name="tipo" value="{{ tipo }}">
+
         <!-- Nombre del negocio -->
         <div class="mb-3">
             <label class="form-label">Nombre del negocio</label>
@@ -27,8 +39,9 @@
             <textarea name="descripcion" class="form-control" rows="3" placeholder="Breve descripción del negocio..."></textarea>
         </div>
 
-        <!-- Botón de guardar -->
+        <!-- Botones -->
         <button type="submit" class="btn btn-success w-100">💾 Guardar</button>
+        <a href="{{ url_for('dashboard', tipo=tipo) }}" class="btn btn-secondary w-100 mt-2">Cancelar</a>
     </form>
 </div>
 {% endblock %}

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS productos (
     qr_path TEXT
 );
 
--- Tabla inventario (auxiliar, opcional)
+-- Tabla inventario (auxiliar)
 CREATE TABLE IF NOT EXISTS inventario (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     producto TEXT NOT NULL,
@@ -76,11 +76,30 @@ CREATE TABLE IF NOT EXISTS reportes_programados (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de reportes enviados (nuevo bloque)
+-- Tabla de reportes enviados
 CREATE TABLE IF NOT EXISTS reportes_enviados (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     negocio TEXT NOT NULL,
     reporte TEXT NOT NULL,
     fecha_envio TEXT NOT NULL,
     destinatario TEXT
+);
+
+-- Tabla negocio (auxiliar)
+CREATE TABLE IF NOT EXISTS negocio (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    patron TEXT,
+    usuario TEXT,
+    descripcion TEXT
+);
+
+-- Tabla de logs
+CREATE TABLE IF NOT EXISTS logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha TEXT NOT NULL,
+    usuario TEXT NOT NULL,
+    accion TEXT NOT NULL,
+    detalle TEXT,
+    negocio TEXT
 );

@@ -16,7 +16,9 @@ from openpyxl import Workbook
 from fpdf import FPDF
 from email.mime.base import MIMEBase
 from email import encoders
-
+from flask import make_response
+from xhtml2pdf import pisa
+import io
 
 scheduler = BackgroundScheduler()
 
@@ -91,6 +93,83 @@ NEGOCIOS_INFO = {
         "color": "primary",
     },
 }
+
+
+
+
+
+import sqlite3
+from datetime import datetime
+
+def registrar_log(usuario, accion, detalle=None, negocio=None):
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO logs (fecha, usuario, accion, detalle, negocio)
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        usuario,
+        accion,
+        detalle,
+        negocio
+    ))
+    conn.commit()
+    conn.close()
+
+
+# ---------------------------
+# Conexión a la base de datos
+# ---------------------------
+def get_db_connection():
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+# ---------------------------
+# Registro de negocio
+# ---------------------------
+@app.route("/registro_negocio/<tipo>", methods=["GET", "POST"])
+def registro_negocio(tipo):
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        patron = request.form["patron"]
+        usuario = request.form["usuario"]
+        descripcion = request.form["descripcion"]
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 👉 Validar si ya existe un negocio con este tipo
+        cursor.execute("SELECT id FROM negocios WHERE tipo = ?", (tipo,))
+        existe = cursor.fetchone()
+
+        if existe:
+            flash("⚠️ Ya existe un negocio registrado para este tipo.", "warning")
+            conn.close()
+            return redirect(url_for("dashboard", tipo=tipo))
+
+        # 👉 Insertar solo si no existe
+        cursor.execute("""
+            INSERT INTO negocios (nombre, patron, usuario, descripcion, tipo)
+            VALUES (?, ?, ?, ?, ?)
+        """, (nombre, patron, usuario, descripcion, tipo))
+        conn.commit()
+        conn.close()
+
+        # Guardar datos en sesión
+        session["negocio_registrado"] = True
+        session["negocio_nombre"] = nombre
+        session["negocio_actual"] = tipo
+
+        flash("✅ Negocio registrado correctamente.", "success")
+        # Redirigir al dashboard del negocio actual
+        return redirect(url_for("dashboard", tipo=tipo))
+
+    # Si es GET → mostrar formulario
+    return render_template("formulario_negocio.html", tipo=tipo)
+
 
 
 # ---------------------------
@@ -749,12 +828,27 @@ def dashboard_tienda_de_ropa():
         ventas_categoria=ventas_categoria
     )
 
-
-#----------------------------
-#formulario negocio
-#----------------------------
+# ---------------------------
+# FORMULARIO DE NEGOCIO
+# ---------------------------
 @app.route("/formulario_negocio/<tipo>", methods=["GET", "POST"])
 def formulario_negocio(tipo):
+    # 👉 Normalizar el tipo (sin espacios y en minúsculas)
+    tipo = (tipo or "").strip().lower()
+
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+
+    # 👉 Validar si ya existe negocio ANTES de mostrar formulario
+    cursor.execute("SELECT id FROM negocios WHERE LOWER(tipo) = ?", (tipo,))
+    existe = cursor.fetchone()
+    conn.close()
+
+    # 🚫 Si ya existe y es GET → redirigir al dashboard
+    if existe and request.method == "GET":
+        flash("⚠️ Ya existe un negocio registrado para este tipo.", "warning")
+        return redirect(url_for("dashboard", tipo=tipo))
+
     if request.method == "POST":
         # Capturar datos del formulario
         nombre = request.form["nombre"]
@@ -762,9 +856,18 @@ def formulario_negocio(tipo):
         usuario = request.form["usuario"]
         descripcion = request.form["descripcion"]
 
-        # Guardar en la base de datos
         conn = sqlite3.connect("ventas_app.db")
         cursor = conn.cursor()
+
+        # 🚫 Validar otra vez en POST para evitar duplicados
+        cursor.execute("SELECT id FROM negocios WHERE LOWER(tipo) = ?", (tipo,))
+        existe = cursor.fetchone()
+        if existe:
+            flash("⚠️ Ya existe un negocio registrado para este tipo.", "warning")
+            conn.close()
+            return redirect(url_for("dashboard", tipo=tipo))
+
+        # ✅ Guardar en la base de datos solo si no existe
         cursor.execute("""
             INSERT INTO negocios (tipo, nombre, patron, usuario, descripcion)
             VALUES (?, ?, ?, ?, ?)
@@ -780,15 +883,17 @@ def formulario_negocio(tipo):
         # Redirigir al dashboard del negocio elegido
         return redirect(url_for("dashboard", tipo=tipo))
 
-    # Renderizar el formulario
+    # 👉 Solo si no existe negocio, mostrar formulario
     return render_template("formulario_negocio.html", tipo=tipo)
-
 
 # ---------------------------
 # DASHBOARD GENERAL
 # ---------------------------
 @app.route("/dashboard/<tipo>")
 def dashboard(tipo):
+    # 👉 Normalizar el tipo (sin espacios y en minúsculas)
+    tipo = (tipo or "").strip().lower()
+
     conn = sqlite3.connect("ventas_app.db")
     cursor = conn.cursor()
 
@@ -796,9 +901,18 @@ def dashboard(tipo):
     cursor.execute("""
         SELECT nombre, patron, usuario, descripcion 
         FROM negocios 
-        WHERE tipo = ?
+        WHERE LOWER(tipo) = ?
+        LIMIT 1
     """, (tipo,))
     negocio = cursor.fetchone()
+
+    # ✅ Validar si existe el negocio
+    if not negocio:
+        conn.close()
+        # Si no existe → mostrar formulario de registro
+        return render_template("formulario_negocio.html", tipo=tipo)
+
+    nombre, patron, usuario, descripcion = negocio
 
     # Buscar productos del negocio
     cursor.execute("""
@@ -819,18 +933,11 @@ def dashboard(tipo):
 
     conn.close()
 
-    # Datos del negocio
-    if negocio:
-        nombre, patron, usuario, descripcion = negocio
-    else:
-        nombre, patron, usuario, descripcion = None, None, None, None
-
-    # ✅ Guardar también en sesión para usar en navbar y títulos
+    # Guardar en sesión
     session["negocio_actual"] = tipo
     session["negocio_nombre"] = nombre
 
     # --- KPIs y gráficas ---
-    # Ganancias acumuladas
     ganancias = sum(v[2] for v in ventas) if ventas else 0
 
     # Stock por categoría
@@ -844,7 +951,7 @@ def dashboard(tipo):
     # Ventas por mes
     ventas_por_mes = {}
     for v in ventas:
-        fecha = datetime.strptime(v[0], "%Y-%m-%d").date()
+        fecha = datetime.strptime(v[0].split()[0], "%Y-%m-%d").date()
         mes = fecha.strftime("%b %Y")
         ventas_por_mes[mes] = ventas_por_mes.get(mes, 0) + v[2]
     meses_labels = list(ventas_por_mes.keys())
@@ -865,6 +972,35 @@ def dashboard(tipo):
                            ventas_mes=ventas_values)
 
 # ---------------------------
+# BORRAR REGISTRO DE NEGOCIO
+# ---------------------------
+@app.route("/borrar_registro/<tipo>", methods=["POST"])
+def borrar_registro(tipo):
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+
+    # Eliminar el negocio y sus datos asociados
+    cursor.execute("DELETE FROM negocios WHERE tipo = ?", (tipo,))
+    cursor.execute("DELETE FROM productos WHERE negocio = ?", (tipo,))
+    cursor.execute("""
+        DELETE FROM ventas 
+        WHERE usuario_id IN (
+            SELECT id FROM usuarios WHERE negocio = ?
+        )
+    """, (tipo,))
+    cursor.execute("DELETE FROM usuarios WHERE negocio = ?", (tipo,))
+    conn.commit()
+    conn.close()
+
+    # Limpiar variables de sesión
+    session.pop("negocio_actual", None)
+    session.pop("negocio_nombre", None)
+
+    flash("Registro eliminado. Debes registrar de nuevo.", "warning")
+    return redirect(url_for("dashboard", tipo=tipo))
+
+
+# ---------------------------
 # USUARIOS (ADMIN)
 # ---------------------------
 @app.route("/usuarios")
@@ -878,9 +1014,9 @@ def usuarios():
 
     return render_template("usuarios.html", usuarios=usuarios)
 
-#---------------------------
-#usuarios
-#---------------------------
+# ---------------------------
+# USUARIOS
+# ---------------------------
 @app.route("/crear_usuario", methods=["POST"])
 def crear_usuario():
     # Solo admin puede crear usuarios
@@ -904,15 +1040,19 @@ def crear_usuario():
     conn.close()
 
     # ✅ Registrar acción en logs
-    registrar_log(session["usuario_nombre"], "Crear usuario", f"Usuario {nombre} ({rol}) creado")
+    registrar_log(
+        session.get("usuario_nombre"),   # usuario que ejecuta
+        "Crear usuario",                 # acción
+        f"Usuario {nombre} ({rol}) creado",  # detalle
+        session.get("negocio_actual")    # negocio actual
+    )
 
     flash(f"Usuario {nombre} creado correctamente", "success")
     return redirect(url_for("usuarios"))
 
-
-#---------------------------
-#logs
-#---------------------------
+# ---------------------------
+#  Logs
+# --------------------------
 @app.route("/logs")
 def logs():
     # Solo admin puede ver el historial
@@ -922,13 +1062,13 @@ def logs():
 
     conn = get_db_connection()
     registros = conn.execute("""
-        SELECT usuario, accion, detalle, fecha 
+        SELECT fecha, usuario, accion, detalle, negocio
         FROM logs 
         ORDER BY fecha DESC
     """).fetchall()
     conn.close()
 
-    return render_template("logs.html", logs=registros)
+    return render_template("logs.html", registros=registros)
 
 
 # ---------------------------
@@ -1885,6 +2025,258 @@ def reporte():
         fecha_fin=fecha_fin,
         negocio_actual=session.get("negocio", "general")
     )
+
+# ---------------------------
+#   Factura electrónica
+# ---------------------------
+@app.route("/factura/<int:venta_id>")
+def generar_factura(venta_id):
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+
+    # Buscar datos de la venta
+    cursor.execute("SELECT fecha, cliente, total FROM ventas WHERE id = ?", (venta_id,))
+    venta = cursor.fetchone()
+
+    # 👉 JOIN con productos para obtener el nombre
+    cursor.execute("""
+        SELECT p.nombre, d.cantidad, d.precio
+        FROM detalle_ventas d
+        JOIN productos p ON d.producto_id = p.id
+        WHERE d.venta_id = ?
+    """, (venta_id,))
+    productos = cursor.fetchall()
+
+    if not venta:
+        conn.close()
+        flash("Venta no encontrada", "danger")
+        return redirect(url_for("ventas"))
+
+    # --- Generar número consecutivo ---
+    cursor.execute("SELECT COUNT(*) FROM facturas")
+    count = cursor.fetchone()[0]
+    numero = f"FAC-{count+1:04d}"
+
+    # Insertar registro en la tabla facturas
+    cursor.execute("""
+        INSERT INTO facturas (numero, negocio, fecha, cliente, total, estado)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (numero, session.get("negocio_actual"), venta[0], venta[1], venta[2], "emitida"))
+    conn.commit()
+    conn.close()
+
+    # Renderizar template HTML
+    html = render_template("factura.html",
+                           venta=venta,
+                           productos=productos,
+                           negocio=session.get("negocio_nombre"),
+                           numero=numero)
+
+    # Convertir HTML a PDF
+    pdf_buffer = io.BytesIO()
+    pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
+
+    response = make_response(pdf_buffer.getvalue())
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f"inline; filename=factura_{venta_id}.pdf"
+    return response
+
+# ----------------------------
+# Listar facturas
+# ----------------------------
+@app.route("/facturas")
+def listar_facturas():
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+
+    # Listado de facturas
+    cursor.execute("SELECT id, numero, fecha, cliente, total, estado FROM facturas ORDER BY fecha DESC")
+    facturas = cursor.fetchall()
+
+    # KPIs
+    cursor.execute("SELECT COUNT(*) FROM facturas WHERE estado = 'emitida'")
+    emitidas = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM facturas WHERE estado = 'anulada'")
+    anuladas = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM facturas WHERE estado = 'pagada'")
+    pagadas = cursor.fetchone()[0]
+
+    cursor.execute("SELECT SUM(total) FROM facturas WHERE estado = 'pagada'")
+    total_pagado = cursor.fetchone()[0] or 0
+
+    # Totales por mes (solo pagadas)
+    cursor.execute("""
+        SELECT strftime('%Y-%m', fecha) as mes, SUM(total)
+        FROM facturas
+        WHERE estado = 'pagada'
+        GROUP BY mes
+        ORDER BY mes
+    """)
+    rows = cursor.fetchall()
+    meses = [r[0] for r in rows]
+    totales_mes = [r[1] for r in rows]
+
+    # Top 5 clientes
+    cursor.execute("""
+        SELECT cliente, SUM(total) as total_cliente
+        FROM facturas
+        WHERE estado = 'pagada'
+        GROUP BY cliente
+        ORDER BY total_cliente DESC
+        LIMIT 5
+    """)
+    clientes_rows = cursor.fetchall()
+    clientes = [r[0] for r in clientes_rows]
+    totales_clientes = [r[1] for r in clientes_rows]
+
+    conn.close()
+
+    return render_template("facturas.html",
+                           facturas=facturas,
+                           emitidas=emitidas,
+                           anuladas=anuladas,
+                           pagadas=pagadas,
+                           total_pagado=total_pagado,
+                           meses=meses,
+                           totales_mes=totales_mes,
+                           clientes=clientes,
+                           totales_clientes=totales_clientes)
+
+
+
+# ---------------------------
+#   Filtrar facturas
+# ---------------------------
+@app.route("/facturas/filtrar", methods=["POST"])
+def filtrar_facturas():
+    fecha_inicio = request.form.get("fecha_inicio")
+    fecha_fin = request.form.get("fecha_fin")
+    cliente = request.form.get("cliente")
+
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+
+    query = "SELECT id, numero, fecha, cliente, total, estado FROM facturas WHERE 1=1"
+    params = []
+
+    if fecha_inicio:
+        query += " AND fecha >= ?"
+        params.append(fecha_inicio)
+    if fecha_fin:
+        query += " AND fecha <= ?"
+        params.append(fecha_fin)
+    if cliente:
+        query += " AND cliente LIKE ?"
+        params.append(f"%{cliente}%")
+
+    cursor.execute(query, params)
+    facturas = cursor.fetchall()
+    conn.close()
+
+    return render_template("facturas.html", facturas=facturas)
+
+# ---------------------------
+#   Exportar facturas a PDF
+# ---------------------------
+@app.route("/facturas/exportar_pdf")
+def exportar_facturas_pdf():
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT numero, fecha, cliente, total, estado FROM facturas ORDER BY fecha DESC")
+    facturas = cursor.fetchall()
+    conn.close()
+
+    html = render_template("facturas_reporte.html", facturas=facturas)
+    pdf_buffer = io.BytesIO()
+    pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
+
+    response = make_response(pdf_buffer.getvalue())
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = "attachment; filename=facturas.pdf"
+    return response
+
+
+# ---------------------------
+#   Exportar facturas a Excel
+# ---------------------------
+@app.route("/facturas/exportar_excel")
+def exportar_facturas_excel():
+    import pandas as pd
+    conn = sqlite3.connect("ventas_app.db")
+    df = pd.read_sql_query("SELECT * FROM facturas ORDER BY fecha DESC", conn)
+    conn.close()
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name="Facturas")
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    response.headers["Content-Disposition"] = "attachment; filename=facturas.xlsx"
+    return response
+
+# ---------------------------
+#   Anular factura
+# ---------------------------
+@app.route("/facturas/anular/<int:id>")
+def anular_factura(id):
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE facturas SET estado = 'anulada' WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    flash("Factura anulada correctamente", "info")
+    return redirect(url_for("listar_facturas"))
+
+# ---------------------------
+#   Marcar factura como pagada
+# ---------------------------
+@app.route("/facturas/pagar/<int:id>")
+def pagar_factura(id):
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE facturas SET estado = 'pagada' WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    flash("Factura marcada como pagada", "success")
+    return redirect(url_for("listar_facturas"))
+
+# ---------------------------
+#   Filtrar facturas con estado
+# ---------------------------
+@app.route("/facturas/filtrar_estado", methods=["POST"])
+def filtrar_facturas():
+    fecha_inicio = request.form.get("fecha_inicio")
+    fecha_fin = request.form.get("fecha_fin")
+    cliente = request.form.get("cliente")
+    estado = request.form.get("estado")
+
+    conn = sqlite3.connect("ventas_app.db")
+    cursor = conn.cursor()
+
+    query = "SELECT id, numero, fecha, cliente, total, estado FROM facturas WHERE 1=1"
+    params = []
+
+    if fecha_inicio:
+        query += " AND fecha >= ?"
+        params.append(fecha_inicio)
+    if fecha_fin:
+        query += " AND fecha <= ?"
+        params.append(fecha_fin)
+    if cliente:
+        query += " AND cliente LIKE ?"
+        params.append(f"%{cliente}%")
+    if estado and estado != "todos":
+        query += " AND estado = ?"
+        params.append(estado)
+
+    cursor.execute(query, params)
+    facturas = cursor.fetchall()
+    conn.close()
+
+    return render_template("facturas.html", facturas=facturas)
 
 
 # ---------------------------

@@ -7,7 +7,13 @@
     <!-- Información del negocio -->
     {% if nombre %}
     <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">Información del negocio</div>
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <span>Información del negocio</span>
+            <!-- ✅ Botón para borrar registro -->
+            <form action="{{ url_for('borrar_registro', tipo=tipo) }}" method="POST" class="m-0">
+                <button type="submit" class="btn btn-sm btn-danger">Borrar registro</button>
+            </form>
+        </div>
         <div class="card-body">
             <p><strong>Nombre:</strong> {{ nombre }}</p>
             <p><strong>Patrón / Propietario:</strong> {{ patron }}</p>
@@ -86,6 +92,22 @@
         </div>
     </div>
 
+
+    {% if session.get("rol") == "admin" %}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-dark text-white">
+        Panel de administración
+    </div>
+    <div class="card-body text-center">
+        <a href="{{ url_for('logs') }}" class="btn btn-outline-dark w-100 mb-2">
+            📜 Ver historial de actividades
+        </a>
+    </div>
+</div>
+{% endif %}
+
+    
+    
     <!-- Tabla de ventas -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-info text-white">Ventas recientes</div>
@@ -102,7 +124,6 @@
                 <tbody>
                     {% for v in ventas %}
                     <tr>
-                        <!-- ✅ Mostrar fecha completa sin intentar formatear -->
                         <td>{{ v[0] }}</td>
                         <td>{{ v[1] }}</td>
                         <td>${{ v[2] }}</td>
