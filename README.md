@@ -90,8 +90,9 @@ Opción B: Usar init_db.py
 
 Este script crea las tablas y además inserta datos de prueba (usuario Admin y un producto demo).
 Ejecuta:
-python init_db.py
 
+
+python init_db.py
 
 ⚠️ Usa solo una de las dos opciones. Si ya tienes la base creada, no es necesario volver a ejecutar estos pasos.
 

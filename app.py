@@ -160,7 +160,7 @@ def registro_negocio(tipo):
 
         # Guardar datos en sesión
         session["negocio_registrado"] = True
-        session["negocio_nombre"] = nombre
+        session["nombre_negocio"] = nombre
         session["negocio_actual"] = tipo
 
         flash("✅ Negocio registrado correctamente.", "success")
@@ -270,7 +270,7 @@ def set_session_usuario(usuario, negocio=None, nombre_negocio=None):
     session["rol"] = usuario["rol"] if usuario["rol"] else "usuario"
     session["negocio"] = negocio or usuario.get("negocio")
     session["negocio_actual"] = negocio or usuario.get("negocio")
-    session["negocio_nombre"] = nombre_negocio or usuario.get("nombre_negocio")
+    session["nombre_negocio"] = nombre_negocio or usuario.get("nombre_negocio") or negocio or usuario.get("negocio")
 
 
 # ---------------------------
@@ -626,46 +626,89 @@ def seleccionar_negocio():
     if "usuario_id" not in session:
         return redirect(url_for("login"))
 
+    es_admin = session.get("rol") == "admin"
+
+    conn = get_db_connection()
+    usuario_db = conn.execute(
+        "SELECT negocio, nombre_negocio FROM usuarios WHERE id = ?",
+        (session["usuario_id"],)
+    ).fetchone()
+
+    negocio_guardado = usuario_db["negocio"] if usuario_db and usuario_db["negocio"] else None
+    nombre_negocio_guardado = (
+        usuario_db["nombre_negocio"]
+        if usuario_db and usuario_db["nombre_negocio"]
+        else negocio_guardado
+    )
+
+    # Si ya tiene negocio asignado y NO es admin, queda bloqueado
+    if negocio_guardado and not es_admin:
+        session["negocio"] = negocio_guardado
+        session["negocio_actual"] = negocio_guardado
+        session["nombre_negocio"] = nombre_negocio_guardado or negocio_guardado
+
+        conn.close()
+
+        if request.method == "POST":
+            flash("Ya tienes un negocio asignado y no puedes cambiarlo.", "warning")
+            return redirect(url_for("dashboard", tipo=negocio_guardado))
+
+        return render_template(
+            "seleccionar_negocio.html",
+            negocio_actual=negocio_guardado,
+            mostrar_formulario=False,
+            negocio_bloqueado=True
+        )
+
+    # Si es admin, sí puede cambiarlo aunque ya tenga uno
     if request.method == "POST":
         negocio = request.form.get("negocio")
 
-        # Guardar negocio en la base de datos
-        conn = get_db_connection()
+        if not negocio:
+            conn.close()
+            flash("Debes seleccionar un negocio válido.", "warning")
+            return redirect(url_for("seleccionar_negocio"))
+
+        nombre_negocio = negocio.replace("_", " ").title()
+
         conn.execute(
-            "UPDATE usuarios SET negocio=? WHERE id=?",
-            (negocio, session["usuario_id"])
+            "UPDATE usuarios SET negocio = ?, nombre_negocio = ? WHERE id = ?",
+            (negocio, nombre_negocio, session["usuario_id"])
         )
         conn.commit()
         conn.close()
 
-        # ✅ Actualizar sesión con negocio elegido usando la función centralizada
         set_session_usuario(
             {
                 "id": session["usuario_id"],
                 "nombre": session["usuario_nombre"],
                 "rol": session["rol"],
-                "negocio": negocio
+                "negocio": negocio,
+                "nombre_negocio": nombre_negocio
             },
             negocio,
-            None  # aquí podrías pasar el nombre real si lo tienes
+            nombre_negocio
         )
 
-        flash(f"Negocio cambiado a {negocio.capitalize()}", "success")
+        session["negocio"] = negocio
+        session["negocio_actual"] = negocio
+        session["nombre_negocio"] = nombre_negocio
 
-        return render_template(
-            "seleccionar_negocio.html",
-            negocio_actual=negocio,
-            mostrar_formulario=True
-        )
+        if es_admin:
+            flash(f"Negocio cambiado correctamente a: {nombre_negocio}.", "success")
+        else:
+            flash(f"Negocio asignado correctamente: {nombre_negocio}. Esta selección ya no se puede cambiar.", "success")
 
-    negocio_actual = session.get("negocio")
+        return redirect(url_for("dashboard", tipo=negocio))
+
+    conn.close()
+
     return render_template(
         "seleccionar_negocio.html",
-        negocio_actual=negocio_actual,
-        mostrar_formulario=False
+        negocio_actual=negocio_guardado,
+        mostrar_formulario=False,
+        negocio_bloqueado=False
     )
-
-
 
 # ---------------------------
 # Guardar datos negocio
@@ -876,8 +919,9 @@ def formulario_negocio(tipo):
         conn.close()
 
         # ✅ Guardar negocio actual en sesión
-        session["negocio_actual"] = tipo
-        session["negocio_nombre"] = nombre   # 👈 Guardamos el nombre real
+        session["negocio_actual"] = tipo 
+        session["nombre_negocio"] = nombre
+        
 
         flash("✅ Negocio registrado correctamente", "success")
         # Redirigir al dashboard del negocio elegido
@@ -935,7 +979,7 @@ def dashboard(tipo):
 
     # Guardar en sesión
     session["negocio_actual"] = tipo
-    session["negocio_nombre"] = nombre
+    session["nombre_negocio"] = nombre
 
     # --- KPIs y gráficas ---
     ganancias = sum(v[2] for v in ventas) if ventas else 0
@@ -994,7 +1038,7 @@ def borrar_registro(tipo):
 
     # Limpiar variables de sesión
     session.pop("negocio_actual", None)
-    session.pop("negocio_nombre", None)
+    session.pop("nombre_negocio", None)
 
     flash("Registro eliminado. Debes registrar de nuevo.", "warning")
     return redirect(url_for("dashboard", tipo=tipo))
@@ -1235,9 +1279,6 @@ def cambiar_rol(id):
 # ---------------------------
 # INVENTARIO
 # ---------------------------
-from flask import render_template, session, redirect, url_for, flash
-
-
 @app.route("/inventario")
 def inventario():
     """
@@ -1245,36 +1286,38 @@ def inventario():
     Incluye alertas de stock bajo, control de vencimiento, QR, gráficas,
     la lista de reportes programados y conteo por categorías.
     """
+    if "usuario_id" not in session:
+        flash("Debes iniciar sesión primero.", "warning")
+        return redirect(url_for("login"))
+
     negocio_actual = session.get("negocio")
 
     if not negocio_actual:
         flash("Debes seleccionar un negocio antes de ver el inventario.", "warning")
         return redirect(url_for("seleccionar_negocio"))
 
-    # Capturar filtros desde la URL (GET)
     categoria = request.args.get("categoria")
     stock_bajo = request.args.get("stock_bajo")
     proximos_vencer = request.args.get("proximos_vencer")
+
+    conn = None
 
     try:
         conn = get_db_connection()
         query = "SELECT * FROM productos WHERE negocio = ?"
         params = [negocio_actual]
 
-        # Filtro por categoría
         if categoria:
             query += " AND categoria LIKE ?"
             params.append(f"%{categoria}%")
 
         productos = conn.execute(query, params).fetchall()
 
-        # Traer reportes programados del negocio (⚠️ corregido: ordena por id si no existe creado_en)
         reportes_programados = conn.execute(
             "SELECT * FROM reportes_programados WHERE negocio = ? ORDER BY id DESC",
             (negocio_actual,)
         ).fetchall()
 
-        # Traer historial de reportes enviados
         reportes_enviados = conn.execute(
             "SELECT * FROM reportes_enviados WHERE negocio = ? ORDER BY fecha_envio DESC",
             (negocio_actual,)
@@ -1289,7 +1332,6 @@ def inventario():
 
     current_date = datetime.now().date()
 
-    # Filtro adicional en memoria (stock bajo y próximos a vencer)
     if stock_bajo:
         productos = [p for p in productos if p["cantidad"] < 5]
 
@@ -1300,11 +1342,49 @@ def inventario():
                 try:
                     fecha_venc = datetime.strptime(p["fecha_vencimiento"], "%Y-%m-%d").date()
                     dias_restantes = (fecha_venc - current_date).days
-                    if dias_restantes < 30 and dias_restantes >= 0:
+                    if 0 <= dias_restantes < 30:
                         filtrados.append(p)
                 except Exception:
                     pass
         productos = filtrados
+
+    alertas_stock = [p for p in productos if p["cantidad"] < 5]
+
+    alertas_vencimiento = []
+    for p in productos:
+        if p["fecha_vencimiento"]:
+            try:
+                fecha_venc = datetime.strptime(p["fecha_vencimiento"], "%Y-%m-%d").date()
+                dias_restantes = (fecha_venc - current_date).days
+                if 0 <= dias_restantes < 30:
+                    alertas_vencimiento.append(p)
+            except Exception:
+                pass
+
+    categorias_count = {}
+    stock_bajo_count = len(alertas_stock)
+    proximos_vencer_count = len(alertas_vencimiento)
+
+    for p in productos:
+        cat = p["categoria"] or "Sin categoría"
+        categorias_count[cat] = categorias_count.get(cat, 0) + p["cantidad"]
+
+    return render_template(
+        "inventario.html",
+        negocio_actual=negocio_actual,
+        productos=productos,
+        categoria=categoria,
+        stock_bajo=stock_bajo,
+        proximos_vencer=proximos_vencer,
+        current_date=current_date,
+        alertas_stock=alertas_stock,
+        alertas_vencimiento=alertas_vencimiento,
+        reportes_programados=reportes_programados,
+        reportes_enviados=reportes_enviados,
+        categorias_count=categorias_count,
+        stock_bajo_count=stock_bajo_count,
+        proximos_vencer_count=proximos_vencer_count
+    )
 
     # ---------------------------
     # Alertas inteligentes
@@ -2069,7 +2149,7 @@ def generar_factura(venta_id):
     html = render_template("factura.html",
                            venta=venta,
                            productos=productos,
-                           negocio=session.get("negocio_nombre"),
+                           negocio=session.get("nombre_negocio"),
                            numero=numero)
 
     # Convertir HTML a PDF
@@ -2247,7 +2327,7 @@ def pagar_factura(id):
 #   Filtrar facturas con estado
 # ---------------------------
 @app.route("/facturas/filtrar_estado", methods=["POST"])
-def filtrar_facturas():
+def filtrar_facturas_estado():
     fecha_inicio = request.form.get("fecha_inicio")
     fecha_fin = request.form.get("fecha_fin")
     cliente = request.form.get("cliente")

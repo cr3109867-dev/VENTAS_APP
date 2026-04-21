@@ -1,48 +1,51 @@
-{% extends "base.html" %} {% block title %}Seleccionar negocio{% endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Seleccionar negocio{% endblock %}
+
+{% block content %}
 <div class="container text-center mt-4">
 
-    {% if negocio_actual %}
-    <h4 class="mb-4">
-        Negocio actual:
-        <span class="badge bg-primary">{{ negocio_actual|replace('_', ' ')|title }}</span>
-    </h4>
+    {% if negocio_bloqueado %}
+        <h4 class="mb-4">
+            Tu negocio asignado es:
+            <span class="badge bg-primary">{{ negocio_actual|replace('_', ' ')|title }}</span>
+        </h4>
+
+        <div class="alert alert-warning">
+            Este negocio ya quedó fijo y no puede cambiarse.
+        </div>
+
+        <a href="{{ url_for('dashboard', tipo=negocio_actual) }}" class="btn btn-primary">
+            Ir al dashboard
+        </a>
+
     {% else %}
-    <h4 class="mb-4">Seleccione el tipo de negocio</h4>
+        <h4 class="mb-4">Seleccione el tipo de negocio</h4>
+
+        <form method="POST">
+            <div class="row mt-4">
+                <div class="col-md-3 mb-3">
+                    <button type="submit" name="negocio" value="farmacia" class="btn btn-primary btn-lg w-100">
+                        💊 Farmacia
+                    </button>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button type="submit" name="negocio" value="ferreteria" class="btn btn-warning btn-lg w-100">
+                        🛠️ Ferretería
+                    </button>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button type="submit" name="negocio" value="mercado" class="btn btn-success btn-lg w-100">
+                        🛒 Mercado
+                    </button>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <button type="submit" name="negocio" value="tienda_de_ropa" class="btn btn-info btn-lg w-100">
+                        🏬 Tienda de Ropa
+                    </button>
+                </div>
+            </div>
+        </form>
     {% endif %}
 
-    <div class="row mt-4">
-        <div class="col-md-3 mb-3">
-            <a href="{{ url_for('formulario_negocio', tipo='farmacia') }}" class="btn btn-primary btn-lg w-100">
-                💊 Farmacia
-            </a>
-        </div>
-        <div class="col-md-3 mb-3">
-            <a href="{{ url_for('formulario_negocio', tipo='ferreteria') }}" class="btn btn-warning btn-lg w-100">
-                🛠️ Ferretería
-            </a>
-        </div>
-        <div class="col-md-3 mb-3">
-            <a href="{{ url_for('formulario_negocio', tipo='mercado') }}" class="btn btn-success btn-lg w-100">
-                🛒 Mercado
-            </a>
-        </div>
-        <div class="col-md-3 mb-3">
-            <a href="{{ url_for('formulario_negocio', tipo='ropa') }}" class="btn btn-info btn-lg w-100">
-                🏬 Tienda de Ropa
-            </a>
-        </div>
-    </div>
 </div>
-{% endblock %} {% block scripts %} {% if mostrar_formulario %}
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const section = document.getElementById("datos-usuario-form");
-        if (section) {
-            section.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-        }
-    });
-</script>
-{% endif %} {% endblock %}
+{% endblock %}
